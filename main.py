@@ -51,6 +51,11 @@ best_chrom, best_fit, history = run_ga(
     num_docks=len(docks_df),
     num_generations=50
 )
+import sys
+sys.stdout.flush()
+
+
+print("Diversité initiale :", len(set(map(str, initial_population_10))))
 
 print("\nMeilleur Chromosome trouvé :", best_chrom)
 print("Fitness du meilleur :", best_fit)

@@ -32,7 +32,7 @@ def truck_aligned_crossover(parent1, parent2):
     return child1, child2
 
 # --- MUTATION ---
-def mutate(chromosome, num_docks, mutation_rate=0.07):
+def mutate(chromosome, num_docks, mutation_rate=0.2):
     """
     Mutation aléatoire : échange de containers ou changement de dock.
     """
@@ -51,13 +51,18 @@ def mutate(chromosome, num_docks, mutation_rate=0.07):
     return chromosome
 
 # --- MAIN GA LOOP ---
+
 def run_ga(initial_population, fitness_evaluator, num_docks,
            num_generations=100, num_elites=2, crossover_rate=0.8, mutation_rate=0.1):
     """
-    Exécute l’algorithme génétique.
+    Exécute l’algorithme génétique avec suivi du meilleur global.
     """
     population = copy.deepcopy(initial_population)
     best_fitness_history = []
+
+    # 🔹 Variables pour suivre le meilleur global
+    global_best_fitness = float('inf')
+    global_best_chromosome = None
 
     for gen in range(num_generations):
         # 1. Évaluer fitness
@@ -84,21 +89,25 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
         # 4. Nouvelle population
         population = elites + offspring
 
-        # 5. Suivi meilleur fitness
-        best_fitness = min(fitness_values)
-        best_fitness_history.append(best_fitness)
-        print(f"Gen {gen+1}: Best fitness = {best_fitness}")
+        # 5. Suivi du meilleur global
+        current_best_fitness = min(fitness_values)
+        current_best_chromosome = population[np.argmin(fitness_values)]
+
+        if current_best_fitness < global_best_fitness:
+            global_best_fitness = current_best_fitness
+            global_best_chromosome = copy.deepcopy(current_best_chromosome)
+
+        best_fitness_history.append(global_best_fitness)
+        print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
 
     # 6. Résultat final
-    fitness_values = [fitness_evaluator.calculate_fitness(ch) for ch in population]
-    best_index = np.argmin(fitness_values)
-    best_chromosome = population[best_index]
-
-    # Courbe convergence
     plt.plot(best_fitness_history)
     plt.xlabel("Generation")
     plt.ylabel("Best Fitness")
     plt.title("GA Convergence")
-    plt.show()
+    plt.show(block=False)
+    plt.pause(10)
+    plt.close()
+    
 
-    return best_chromosome, best_fitness_history[best_index], best_fitness_history
+    return global_best_chromosome, global_best_fitness, best_fitness_history
