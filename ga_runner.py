@@ -31,6 +31,20 @@ def truck_aligned_crossover(parent1, parent2):
 
     return child1, child2
 
+'''def truck_aligned_crossover(parent1, parent2):
+    child1, child2 = [], []
+    for i in range(0, len(parent1), 4):  # iterate trucks
+        block1 = parent1[i:i+4]
+        block2 = parent2[i:i+4]
+
+        if random.random() < 0.5:
+            child1 += block1
+            child2 += block2
+        else:
+            child1 += block2
+            child2 += block1
+
+   return child1, child2'''
 # --- MUTATION ---
 def mutate(chromosome, num_docks, mutation_rate=0.2):
     """
@@ -53,7 +67,7 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
 # --- MAIN GA LOOP ---
 
 def run_ga(initial_population, fitness_evaluator, num_docks,
-           num_generations=100, num_elites=2, crossover_rate=0.8, mutation_rate=0.1):
+           num_generations=100, num_elites=2, crossover_rate=0.9, mutation_rate=0.03):
     """
     Exécute l’algorithme génétique avec suivi du meilleur global.
     """
@@ -106,7 +120,7 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
     plt.ylabel("Best Fitness")
     plt.title("GA Convergence")
     plt.show(block=False)
-    plt.pause(10)
+    plt.pause(50)
     plt.close()
     
 
