@@ -31,29 +31,47 @@ def print_chromosome_assignments(chromosome, trucks_df):
         print(f"Truck {t}: Containers {chromosome[idx]} -> Dock {chromosome[idx+2]}")
 
 
-def verify_solution_feasibility(chromosome, trucks_df, containers_df):
+def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id):
     """
     Vérifie si une solution (chromosome) est faisable.
     Retourne un dictionnaire contenant les erreurs et un booléen de faisabilité.
     """
+    df_containers = containers_df[containers_df["Instance"] == instance_id].copy()
+    df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()
+    instance_docks_df = trucks_df[trucks_df["Instance"] == instance_id].copy()
     errors = []
     all_assigned_containers = []
+    truck_ids = instance_docks_df['TruckID'].tolist()
+    # ...existing code...
+    truck_ids = instance_docks_df['TruckID'].tolist()
+    num_trucks = len(truck_ids)
+    num_blocks = len(chromosome) // 4
 
-    # 1️⃣ Vérifier la capacité de chaque camion
-    for i in range(0, len(chromosome), 4):
-        containers_assigned = chromosome[i]
-        truck_id = i // 4 + 1
+    for i in range(num_blocks):
+        if i >= num_trucks:
+            errors.append(f"⚠️ Bloc chromosome {i} sans camion correspondant (instance {instance_id})")
+            continue
 
-        truck_info = trucks_df.loc[trucks_df["TruckID"] == truck_id].iloc[0]
+        containers_assigned = chromosome[i * 4]
+        truck_id = truck_ids[i]
+
+        truck_info = df_trucks.loc[df_trucks["TruckID"] == truck_id].iloc[0]
         truck_capacity = truck_info["Capacity"]
         truck_destination = truck_info["Destination"]
 
         total_length = 0
         for c_id in containers_assigned:
-            cont_info = containers_df.loc[containers_df["ContainerID"] == c_id].iloc[0]
+            cont_rows = df_containers.loc[df_containers["ContainerID"] == c_id]
+            if cont_rows.empty:
+                errors.append(
+                    f"⚠️ Conteneur {c_id} n'existe pas dans l'instance {instance_id}"
+                )
+                continue  # Passe au suivant
+
+            cont_info = cont_rows.iloc[0]
             total_length += cont_info["Length"]
 
-            # Vérifier la destination
+
             if cont_info["Destination"] != truck_destination:
                 errors.append(
                     f"❌ Conteneur {c_id} (dest {cont_info['Destination']}) "
@@ -66,6 +84,7 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df):
             )
 
         all_assigned_containers.extend(containers_assigned)
+# ...existing code...
 
     # 2️⃣ Vérifier les conteneurs dupliqués
     duplicates = [c for c in set(all_assigned_containers) if all_assigned_containers.count(c) > 1]

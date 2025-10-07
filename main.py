@@ -23,9 +23,9 @@ Truck_cost_df = pd.DataFrame(data_2)
 #containers_df = pd.DataFrame(data)
 
 # Charger les données
-containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all (1).csv")
-trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all (1).csv")
-docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all (1).csv")
+containers_df = pd.read_csv("C:/Users/HP/algo_genetique/containers_all (1).csv")
+trucks_df = pd.read_csv("C:/Users/HP/algo_genetique/trucks_all (1).csv")
+docks_df = pd.read_csv("C:/Users\HP/algo_genetique/docks_all (1).csv")
 #truck_cost_df = pd.read_csv("truck_cost.csv")
 
 # Générer population
@@ -71,7 +71,7 @@ print(f"Temps d'exécution : {execution_time:.3f} secondes")
 print("\nMeilleur Chromosome trouvé :", best_chrom)
 print("Fitness du meilleur :", best_fit)
 for idx, chromosome in enumerate(initial_population_100):
-    feasible, errors = verify_solution_feasibility(chromosome, Truck_cost_df, containers_df)
+    feasible, errors = verify_solution_feasibility(chromosome, trucks_df, containers_df, instance_id=12)
     print(f"\nChromosome {idx+1} : {' Faisable' if feasible else ' Non faisable'}")
     if not feasible:
         for err in errors:
