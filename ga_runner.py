@@ -2,8 +2,47 @@
 import random
 import copy
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from utils import  verify_solution_feasibility
+data = {
+    'Container': [1, 2, 3, 4, 5, 6],
+    'Length': [2, 4, 2, 5, 10, 4],
+    'Position': [57, 63, 58, 49, 26, 71],
+    'Destination' : [2,2,2,1,1,2]
+}
 
+data_2 = {
+    'Truck': [1, 2,3,4,5],
+    'Destination': [1, 1,2,2,2],
+    'Cost': [624,624, 479,479,479]
+}
+Truck_cost_df = pd.DataFrame(data_2)
+data_containers = {
+    'Instance': [12, 12, 12, 12, 12, 12],
+    'ContainerID': [1, 2, 3, 4, 5, 6],
+    'Length': [2, 4, 2, 5, 10, 4],
+    'Position': [57, 63, 58, 49, 26, 71],
+    'Destination': [2, 2, 2, 1, 1, 2]
+}
+
+data_trucks = {
+    'Instance': [12, 12, 12, 12, 12],
+    'TruckID': [1, 2, 3, 4, 5],
+    'Destination': [1, 1, 2, 2, 2],
+    'Cost': [624, 624, 479, 479, 479],
+    'Capacity': [6, 6, 6, 6, 6],
+    'DockPosition': [1, 1, 4, 4, 2]
+}
+
+data_dock = {
+    'Instance': [12, 12, 12, 12, 12],
+    'DockID': [1, 2, 3, 4, 5],
+    'Position': [5, 1, 3, 2, 4]
+}
+containers_df = pd.DataFrame(data_containers)
+trucks_df = pd.DataFrame(data_trucks)
+docks_df = pd.DataFrame(data_dock)
 # --- SELECTION ---
 def tournament_selection(population, fitness_values, k=3):
     """Sélection par tournoi (choisit le meilleur parmi k individus aléatoires)."""
@@ -102,7 +141,20 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
 
         # 4. Nouvelle population
         population = elites + offspring
-
+        #afficher la nouvelle generation
+        print(f"\n=== Génération {gen+1} : Nouvelle population ===")
+        for i, chrom in enumerate(population):
+         print(f"Chromosome {i+1}:")
+         print(chrom)
+         #verify faisability in new population
+         feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id=12)
+         print(f"\nChromosome {i+1} : {' Faisable' if feasible else ' Non faisable'}")
+         if not feasible:
+            for err in errors:
+             print("   ", err)
+        
+        
+          
         # 5. Suivi du meilleur global
         current_best_fitness = min(fitness_values)
         current_best_chromosome = population[np.argmin(fitness_values)]

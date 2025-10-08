@@ -1,6 +1,7 @@
 
 from binpacking import process_instance, binpacking_to_chromosome
 from utils import generate_random_chromosome
+import pandas as pd
 
 def generate_initial_population(pop_size, containers_df, trucks_df, docks_df, instance_id, ratio_binpacking=0.2):
     population, seen = [], set()
@@ -14,7 +15,7 @@ def generate_initial_population(pop_size, containers_df, trucks_df, docks_df, in
             population.append(chrom); seen.add(key)
 
     while len(population) < pop_size:
-        chrom = generate_random_chromosome(trucks_df, docks_df, containers_df)
+        chrom = generate_random_chromosome(trucks_df , docks_df, containers_df)
         key = str(chrom)
         if key not in seen:
             population.append(chrom); seen.add(key)

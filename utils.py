@@ -2,6 +2,31 @@
 import random
 import pandas as pd
 import copy
+data_containers = {
+    'Instance': [12, 12, 12, 12, 12, 12],
+    'ContainerID': [1, 2, 3, 4, 5, 6],
+    'Length': [2, 4, 2, 5, 10, 4],
+    'Position': [57, 63, 58, 49, 26, 71],
+    'Destination': [2, 2, 2, 1, 1, 2]
+}
+
+data_trucks = {
+    'Instance': [12, 12, 12, 12, 12],
+    'TruckID': [1, 2, 3, 4, 5],
+    'Destination': [1, 1, 2, 2, 2],
+    'Cost': [624, 624, 479, 479, 479],
+    'Capacity': [6, 6, 6, 6, 6],
+    'DockPosition': [1, 1, 4, 4, 2]
+}
+
+data_dock = {
+    'Instance': [12, 12, 12, 12, 12],
+    'DockID': [1, 2, 3, 4, 5],
+    'Position': [5, 1, 3, 2, 4]
+}
+containers_df = pd.DataFrame(data_containers)
+trucks_df = pd.DataFrame(data_trucks)
+docks_df = pd.DataFrame(data_dock)
 def generate_random_chromosome(trucks_df, docks_df, containers_df):
     chromosome = []
     dock_positions = docks_df['DockID'].tolist()
