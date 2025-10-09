@@ -108,7 +108,14 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
                 f"⚠️ Camion {truck_id} dépasse la capacité ({total_length}/{truck_capacity})"
             )
 
+        
         all_assigned_containers.extend(containers_assigned)
+    # 3️⃣ Check unassigned containers
+    all_containers = df_containers["ContainerID"].tolist()
+    unassigned = [c for c in all_containers if c not in all_assigned_containers]
+    if unassigned:
+     errors.append(f"⚠️ Conteneurs non assignés : {unassigned}")   
+
 # ...existing code...
 
     # 2️⃣ Vérifier les conteneurs dupliqués

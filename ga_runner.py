@@ -119,7 +119,11 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
 
     for gen in range(num_generations):
         # 1. Évaluer fitness
-        fitness_values = [fitness_evaluator.calculate_fitness(ch) for ch in population]
+        fitness_values = [
+        fitness_evaluator.calculate_fitness(ch, trucks_df, containers_df, instance_id=12)
+        for ch in population
+]
+
 
         # 2. Garder élites
         elites = elitism_selection(population, fitness_values, num_elites)
