@@ -21,7 +21,7 @@ Truck_cost_df = pd.DataFrame(data_2)
 data_containers = {
     'Instance': [12, 12, 12, 12, 12, 12],
     'ContainerID': [1, 2, 3, 4, 5, 6],
-    'Length': [2, 4, 2, 5, 10, 4],
+    'Length': [2, 4, 2, 5, 5, 4],# changed the container length from 10 to 5 because it will never fit in the truck sincr the truck capacity is 6
     'Position': [57, 63, 58, 49, 26, 71],
     'Destination': [2, 2, 2, 1, 1, 2]
 }
@@ -43,6 +43,7 @@ data_dock = {
 containers_df = pd.DataFrame(data_containers)
 trucks_df = pd.DataFrame(data_trucks)
 docks_df = pd.DataFrame(data_dock)
+penalties = []  #define this before the for-loop
 # --- SELECTION ---
 def tournament_selection(population, fitness_values, k=3):
     """Sélection par tournoi (choisit le meilleur parmi k individus aléatoires)."""
@@ -169,15 +170,45 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
 
         best_fitness_history.append(global_best_fitness)
         print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
-
+        penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id=12)
+        penalties.append(penalty_value)
     # 6. Résultat final
-    plt.plot(best_fitness_history)
+    '''plt.plot(best_fitness_history)
     plt.xlabel("Generation")
     plt.ylabel("Best Fitness")
     plt.title("GA Convergence")
     plt.show(block=False)
     plt.pause(50)
-    plt.close()
+    plt.close()'''
+    '''
+    plt.figure()
+    plt.plot(penalties, label="Penalty")
+    plt.xlabel("Generation")
+    plt.ylabel("Total Penalty")
+    plt.title("Penalty Evolution")
+    plt.legend()
+    plt.show()'''
+
     
+    fig, axes = plt.subplots(2, 1, figsize=(8, 6))
+
+    # Fitness
+    axes[0].plot(best_fitness_history, color='blue')
+    axes[0].set_title("GA Convergence (Best Fitness)")
+    axes[0].set_xlabel("Generation")
+    axes[0].set_ylabel("Fitness")
+    axes[0].grid(True)
+
+    # Penalty
+    axes[1].plot(penalties, color='orange', linestyle="--")
+    axes[1].set_title("Penalty Evolution")
+    axes[1].set_xlabel("Generation")
+    axes[1].set_ylabel("Penalty")
+    axes[1].grid(True)
+
+    plt.tight_layout()
+    plt.show(block=False)
+    plt.pause(50)
+    plt.close()
 
     return global_best_chromosome, global_best_fitness, best_fitness_history

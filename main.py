@@ -103,6 +103,12 @@ print("Fitness du meilleur :", best_fit)
 for idx, chromosome in enumerate(initial_population_10):
     print_chromosome_assignments(chromosome, trucks_df)
 
+for i, chrom in enumerate(initial_population_10):
+    print(f"Chromosome {i+1}:")
+    for j in range(0, len(chrom), 4):
+        print(f"  Truck {j//4 + 1}: {chrom[j]}")
+
+
 #verify faisable solutions in initial population
 '''for idx, chromosome in enumerate(initial_population_10):
     feasible, errors = verify_solution_feasibility(chromosome, trucks_df, containers_df, instance_id=12)
