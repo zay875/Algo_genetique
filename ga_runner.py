@@ -107,7 +107,7 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
 # --- MAIN GA LOOP ---
 
 def run_ga(initial_population, fitness_evaluator, num_docks,
-           num_generations=100, num_elites=2, crossover_rate=0.9, mutation_rate=0.03):
+           num_generations=100, num_elites=1, crossover_rate=0.9, mutation_rate=0.03):
     """
     Exécute l’algorithme génétique avec suivi du meilleur global.
     """

@@ -23,7 +23,7 @@ Truck_cost_df = pd.DataFrame(data_2)
 data_containers = {
     'Instance': [12, 12, 12, 12, 12, 12],
     'ContainerID': [1, 2, 3, 4, 5, 6],
-    'Length': [2, 4, 2, 5, 10, 4],
+    'Length': [2, 4, 2, 5, 5, 4],
     'Position': [57, 63, 58, 49, 26, 71],
     'Destination': [2, 2, 2, 1, 1, 2]
 }
@@ -108,6 +108,17 @@ for i, chrom in enumerate(initial_population_10):
     for j in range(0, len(chrom), 4):
         print(f"  Truck {j//4 + 1}: {chrom[j]}")
 
+penalty, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df, containers_df, 12)
+f1 = fitness_eval.calculate_truck_cost_f1(best_chrom)
+f2 = fitness_eval.calculate_energy_cost_f2(best_chrom)
+fitness_no_penalty = fitness_eval.W1 * f1 + fitness_eval.W2 * f2
+
+print("\n=== Final Best Chromosome ===")
+print(f"Truck cost (F1): {f1}")
+print(f"Energy cost (F2): {f2}")
+print(f"Penalty: {penalty}")
+print(f"Total fitness (with penalty): {fitness_no_penalty + penalty}")
+print(f"Fitness without penalty: {fitness_no_penalty}")
 
 #verify faisable solutions in initial population
 '''for idx, chromosome in enumerate(initial_population_10):
