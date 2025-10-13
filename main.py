@@ -7,6 +7,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import verify_solution_feasibility , print_chromosome_assignments
+'''
 data = {
     'Container': [1, 2, 3, 4, 5, 6],
     'Length': [2, 4, 2, 5, 10, 4],
@@ -46,20 +47,27 @@ containers_df = pd.DataFrame(data_containers)
 trucks_df = pd.DataFrame(data_trucks)
 docks_df = pd.DataFrame(data_dock)
 #containers_df = pd.DataFrame(data)
-
-# Charger les données
-#containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all (1).csv")
-#trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all (1).csv")
-#docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all (1).csv")
+'''
+#Charger les données
+containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
+trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
+docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
 #truck_cost_df = pd.read_csv("truck_cost.csv")
+# Choisir une instance spécifique
+INSTANCE_ID = 12
+
+# Filtrer les DataFrames pour cette instance
+containers_df_instance = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
+trucks_df_instance = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
+docks_df_instance = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 
 # Générer population
-initial_population_10 = generate_initial_population(10, containers_df, trucks_df, docks_df, instance_id=12)
+initial_population_10 = generate_initial_population(10, containers_df_instance, trucks_df_instance, docks_df_instance, instance_id=12)
 #initial_population_50 = generate_initial_population(50, containers_df, trucks_df, docks_df, instance_id=12)
 #initial_population_100 = generate_initial_population(100, containers_df, trucks_df, docks_df, instance_id=12)
 #initial_population_30 = generate_initial_population(20, containers_df, trucks_df, docks_df, instance_id=12)
 # Fitness
-fitness_eval = FitnessEvaluator(containers_df, Truck_cost_df, C_E=0.5)
+fitness_eval = FitnessEvaluator(containers_df_instance, trucks_df_instance, C_E=0.5)
 
 # Lancer GA
 '''best_chrom, best_fit, history = run_ga(
@@ -101,14 +109,14 @@ print("Fitness du meilleur :", best_fit)
     if len(chromosome) <= 10:
         print(chromosome)'''
 for idx, chromosome in enumerate(initial_population_10):
-    print_chromosome_assignments(chromosome, trucks_df)
+    print_chromosome_assignments(chromosome, trucks_df_instance)
 
 for i, chrom in enumerate(initial_population_10):
     print(f"Chromosome {i+1}:")
     for j in range(0, len(chrom), 4):
         print(f"  Truck {j//4 + 1}: {chrom[j]}")
 
-penalty, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df, containers_df, 12)
+penalty, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df_instance, containers_df_instance, 12)
 f1 = fitness_eval.calculate_truck_cost_f1(best_chrom)
 f2 = fitness_eval.calculate_energy_cost_f2(best_chrom)
 fitness_no_penalty = fitness_eval.W1 * f1 + fitness_eval.W2 * f2

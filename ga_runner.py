@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from utils import  verify_solution_feasibility
+'''
 data = {
     'Container': [1, 2, 3, 4, 5, 6],
     'Length': [2, 4, 2, 5, 10, 4],
@@ -40,10 +41,17 @@ data_dock = {
     'DockID': [1, 2, 3, 4, 5],
     'Position': [5, 1, 3, 2, 4]
 }
-containers_df = pd.DataFrame(data_containers)
-trucks_df = pd.DataFrame(data_trucks)
-docks_df = pd.DataFrame(data_dock)
+'''
+
+
+containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
+trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
+docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
 penalties = []  #define this before the for-loop
+INSTANCE_ID = 12
+containers_df = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
+trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
+docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 # --- SELECTION ---
 def tournament_selection(population, fitness_values, k=3):
     """Sélection par tournoi (choisit le meilleur parmi k individus aléatoires)."""

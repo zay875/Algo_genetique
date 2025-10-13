@@ -2,6 +2,7 @@
 import random
 import pandas as pd
 import copy
+'''
 data_containers = {
     'Instance': [12, 12, 12, 12, 12, 12],
     'ContainerID': [1, 2, 3, 4, 5, 6],
@@ -24,9 +25,17 @@ data_dock = {
     'DockID': [1, 2, 3, 4, 5],
     'Position': [5, 1, 3, 2, 4]
 }
-containers_df = pd.DataFrame(data_containers)
-trucks_df = pd.DataFrame(data_trucks)
-docks_df = pd.DataFrame(data_dock)
+'''
+
+# Load dataframes as usual
+containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
+trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
+docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
+INSTANCE_ID = 12
+containers_df = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
+trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
+docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
+#truck_cost_df = pd.read_csv("truck_cost.csv")
 def generate_random_chromosome(trucks_df, docks_df, containers_df):
     chromosome = []
     dock_positions = docks_df['DockID'].tolist()

@@ -2,18 +2,18 @@
 import pandas as pd
 from utils import verify_solution_feasibility
 class FitnessEvaluator:
-    def __init__(self, containers_df, Truck_cost_df, C_E, W1=0.5, W2=0.5):
+    def __init__(self, containers_df, trucks_df, C_E, W1=0.5, W2=0.5):
         self.containers_df = containers_df
-        self.Truck_cost_df = Truck_cost_df
+        self.trucks_df = trucks_df
         self.C_E = C_E
         self.W1 = W1
         self.W2 = W2
 
         #adding weights for penalty
         self.P_DUP=500   #duplicate penalty
-        self.P_DEST =300  #wrong destination penalty
+        self.P_DEST =2000  #wrong destination penalty
         self.P_CAP =200   #exceeded cpacity penalty
-        self.P_UNASSIGNED=5000 #unassigned container penalty
+        self.P_UNASSIGNED=1000 #unassigned container penalty
 
     def calculate_truck_cost_f1(self, chromosome):
         trucks_assigned = []
@@ -23,7 +23,7 @@ class FitnessEvaluator:
 
         total_cost = 0
         for t in trucks_assigned:
-            row = self.Truck_cost_df[self.Truck_cost_df['Truck'] == t]
+            row = self.trucks_df[self.trucks_df['TruckID'] == t]
             if not row.empty:
                 total_cost += row['Cost'].iloc[0]
         return total_cost
