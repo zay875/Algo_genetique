@@ -13,7 +13,7 @@ P = [3, 6, 8, 10, 13]     # position de chaque container (en m)
 R = [4, 9]                # position possible pour chaque camion
 L = [2, 3, 3, 4, 2]       # longueur de chaque container
 Y = 10                    # longueur verticale du quai (constante)
-
+Q= 6 
 # === Modèle ===
 m = Model("Transport_Energie")
 
@@ -30,14 +30,16 @@ F2 = C_E * quicksum(z[i, h] for i in N for h in H)
 
 m.setObjective(W1 * F1 + W2 * F2, GRB.MINIMIZE)
 
+
 # === Contraintes ===
 
 # (1) Chaque container i assigné à un seul camion h
 for i in N:
     m.addConstr(quicksum(p[i, h] for h in H) == 1, name=f"assign_container[{i}]")
 #capacity constarint
-for i in N:
-    m.addConstr(quicksum(p[i, h]*L[i] for h in H) == 1, name=f"assign_container[{i}]")
+for h in H:
+    m.addConstr(quicksum(L[i] * p[i, h] for i in N) <= Q,
+                name=f"capacity[{h}]")
 
 #(2) Linéarisation du terme absolu : d[i,k] = |P_i - R_k|
 for i in N:
@@ -61,3 +63,4 @@ for v in m.getVars():
         print(f"{v.VarName} {v.X:g}")
 
 print(f"Obj: {m.ObjVal:g}")
+
