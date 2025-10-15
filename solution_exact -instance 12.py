@@ -4,34 +4,33 @@ from gurobipy import GRB
 import sys
 import random
 # === Données ===
-H, D, N, K = range(1,4), range(1,5), range(1,6), range(1,3)
+H, D, N = range(1,7), range(1,5), range(1,6)
 #D destinations, H trucks, N containers, K docks
 
-C_d = {1:10, 2:12, 3:15, 4:9}     # coût par destination
-C_E = 0.8
+C_d = {1:348, 2:591, 3:233, 4:351}     # coût par destination
+C_E = 0.5
 W1, W2 = 0.5, 0.5
 M = 1000                  # grande constante (Big M)
 
 # Paramètres physiques
-P = [3, 6, 8, 10, 13]     # position de chaque container (en m)
-R = [4, 9]                # position possible pour chaque camion
-L = [2, 3, 3, 4, 2]       # longueur de chaque container
+P = [75, 54, 29, 50, 60]     # position de chaque container (en m)
+R = [5, 2, 3, 4]       # positions réelles
+K = list(range(len(R))) # indices des quais               # position possible pour chaque camion
+L = [4, 4, 3, 1, 4]       # longueur de chaque container
 Y = 10                    # longueur verticale du quai (constante)
 Q= 6 
 
 
 random.seed(42)  # optional
-#setting the containers destination randomly
+#setting the containers destination 
+# G doit être une matrice binaire : (d, i) -> {0,1}
 G = {}
-for i in N:
-    # pick exactly one destination for container i
-    chosen_d = random.choice(list(D))
-    for d in D:
-        G[d, i] = 1 if d == chosen_d else 0
+Dest = {1:3, 2:2, 3:4, 4:2, 5:3}  # conteneur -> destination
 
-        
-# --- DONNÉE : destination de chaque conteneur (à adapter !) ---
-Dest= {1:1, 2:1, 3:3, 4:2, 5:4}  # i -> d
+for i in N:
+    for d in D:
+        G[d, i] = 1 if Dest[i] == d else 0
+
 
 # === Modèle ===
 m = Model("Transport_Energie")
@@ -48,7 +47,10 @@ n = m.addVars(H, H, vtype=GRB.BINARY, name="n")       # nh, ng if truck h and g 
 F1 = quicksum(C_d[d_] * a[h, d_] for h in H for d_ in D)
 F2 = C_E * quicksum(z[i, h] for i in N for h in H)
 
-m.setObjective(W1 * F1 + W2 * F2, GRB.MINIMIZE)
+
+#adding a penalty to avoid using the same dock for all trucks, instead of adding a constraint because in the report de reference it does'nt say so, its better to penalize that
+m.setObjective(W1*F1 + W2*F2 + 1e-4*quicksum(k * x[h,k] for h in H for k in K), GRB.MINIMIZE)
+
 
 
 # === Contraintes ===
@@ -64,9 +66,8 @@ for h in H:
 #(2) Linéarisation du terme absolu : d[i,k] = |P_i - R_k| #8
 for i in N:
     for k in K:
-        m.addConstr(d[i, k] >= P[i-1] - R[k-1], name=f"abs_pos1[{i},{k}]")
-        m.addConstr(d[i, k] >= R[k-1] - P[i-1], name=f"abs_pos2[{i},{k}]")
-
+        m.addConstr(d[i, k] >= P[i-1] - R[k], name=f"abs_pos1[{i},{R[k]}]")
+        m.addConstr(d[i, k] >= R[k] - P[i-1], name=f"abs_pos2[{i},{R[k]}]")
 # (3) Définition de z[i,h]
 # z[i,h] >= 2*|P_i - R_k| + Y*L_i - M*(2 - (p[i,h] + x[h,k]))
 for i in N:
@@ -86,6 +87,7 @@ m.addConstrs((
 #a truck is used if at least one container is assigne dto it #5
 m.addConstrs((p[i,h] <= v[h] for h in H for i in N), name="truck_used_id_container_is_assigned_to_it")
 #truck_destination=container_destination assigned to it #6
+
 m.addConstrs((a[h,d] <= G[d,i] + 1 - p[i,h] for i in N for h in H for d in D), name="dest_constraint")
 #if truck h is used, it has one destination #7
 m.addConstrs((v[h] == quicksum(a[h,d] for d in D) for h in H), name="truck_use")
@@ -94,6 +96,9 @@ m.addConstrs((v[h] == quicksum(a[h,d] for d in D) for h in H), name="truck_use")
 m.addConstrs((quicksum(x[h,k] for k in K)==v[h] for h in H), name="truck_dock")
 # constraint 10
 m.addConstrs((x[h,k] + x[g,k]-1 <= n[h,g] + n[g,h] for h in H for g in H if h != g for k in K ) , name="two_trucks_samedock_")
+# constraint 11
+m.addConstrs((n[h,g] + n[g,h] <=1 for h in H for g in H ) , name="only_one_predecesseur")
+
 
 # === Optimisation ===
 m.optimize()
@@ -104,7 +109,9 @@ print(G)
 print("\n--- Résumé affectation ---")
 for h in H:
     assigned = [i for i in N if p[i,h].X > 0.5]
-    print(f"Camion {h}: dest {[d for d in D if a[h,d].X>0.5]} | containers {assigned} | quai {[k for k in K if x[h,k].X>0.5]}")
+    docks = [R[k] for k in K if x[h,k].X > 0.5]   # <<- ici
+    dests = [d for d in D if a[h,d].X > 0.5]
+    print(f"Camion {h}: dest {dests} | containers {assigned} | quai {docks}")
 
 print(f"Obj: {m.ObjVal:g}")
 status = m.Status
