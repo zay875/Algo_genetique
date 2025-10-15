@@ -28,6 +28,7 @@ data_dock = {
 '''
 
 # Load dataframes as usual
+'''
 containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
 trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
 docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
@@ -36,9 +37,10 @@ containers_df = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
 trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
 docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 #truck_cost_df = pd.read_csv("truck_cost.csv")
+'''
 def generate_random_chromosome(trucks_df, docks_df, containers_df):
     chromosome = []
-    dock_positions = docks_df['DockID'].tolist()
+    dock_positions = docks_df['Position'].tolist()
     containers = containers_df[['ContainerID','Length']].to_dict("records")
     random.shuffle(containers)
 

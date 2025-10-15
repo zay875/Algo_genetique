@@ -54,7 +54,7 @@ trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
 docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
 #truck_cost_df = pd.read_csv("truck_cost.csv")
 # Choisir une instance spécifique
-INSTANCE_ID = 12
+INSTANCE_ID = 1
 
 # Filtrer les DataFrames pour cette instance
 containers_df_instance = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
@@ -62,7 +62,7 @@ trucks_df_instance = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
 docks_df_instance = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 
 # Générer population
-initial_population_10 = generate_initial_population(10, containers_df_instance, trucks_df_instance, docks_df_instance, instance_id=12)
+initial_population_10 = generate_initial_population(10, containers_df_instance, trucks_df_instance, docks_df_instance, instance_id=1)
 #initial_population_50 = generate_initial_population(50, containers_df, trucks_df, docks_df, instance_id=12)
 #initial_population_100 = generate_initial_population(100, containers_df, trucks_df, docks_df, instance_id=12)
 #initial_population_30 = generate_initial_population(20, containers_df, trucks_df, docks_df, instance_id=12)
@@ -88,7 +88,7 @@ start_time = time.time()  # ⏱️ Début du chronométrage
 best_chrom, best_fit, history = run_ga(
     initial_population_10,
     fitness_eval,
-    num_docks=len(docks_df),
+    num_docks=len(docks_df_instance),
     num_generations=50
 )
 
@@ -116,7 +116,7 @@ for i, chrom in enumerate(initial_population_10):
     for j in range(0, len(chrom), 4):
         print(f"  Truck {j//4 + 1}: {chrom[j]}")
 
-penalty, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df_instance, containers_df_instance, 12)
+penalty, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df_instance, containers_df_instance, 1)
 f1 = fitness_eval.calculate_truck_cost_f1(best_chrom)
 f2 = fitness_eval.calculate_energy_cost_f2(best_chrom)
 fitness_no_penalty = fitness_eval.W1 * f1 + fitness_eval.W2 * f2

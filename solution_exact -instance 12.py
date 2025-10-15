@@ -3,6 +3,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import sys
 import random
+from gurobipy import max_ 
 # === Données ===
 H, D, N = range(1,7), range(1,5), range(1,6)
 #D destinations, H trucks, N containers, K docks
@@ -19,14 +20,15 @@ K = list(range(len(R))) # indices des quais               # position possible po
 L = [4, 4, 3, 1, 4]       # longueur de chaque container
 Y = 10                    # longueur verticale du quai (constante)
 Q= 6 
-
+V= 5                       #changeover time in min
+I= 5                       #time to load one container in min
 
 random.seed(42)  # optional
 #setting the containers destination 
 # G doit être une matrice binaire : (d, i) -> {0,1}
-G = {}
-Dest = {1:3, 2:2, 3:4, 4:2, 5:3}  # conteneur -> destination
 
+Dest = {1:3, 2:2, 3:4, 4:2, 5:3}  # conteneur -> destination
+G = {}
 for i in N:
     for d in D:
         G[d, i] = 1 if Dest[i] == d else 0
@@ -43,6 +45,8 @@ z = m.addVars(N, H,vtype=GRB.CONTINUOUS, name="z")             # coût énergét
 d = m.addVars(N, K, vtype=GRB.CONTINUOUS,name="d")             # |P_i - R_k|
 v = m.addVars(H,vtype=GRB.BINARY, name="v")       # vh if truck h is used
 n = m.addVars(H, H, vtype=GRB.BINARY, name="n")       # nh, ng if truck h and g are assigned to same dock and h is predecessuer of g
+b=m.addVars(H,vtype=GRB.CONTINUOUS,name="b" )     #start loading time for truck h
+q=m.addVars(H,vtype=GRB.CONTINUOUS,name="q" )     #end loading time for truck hS
 # === Fonctions objectifs ===
 F1 = quicksum(C_d[d_] * a[h, d_] for h in H for d_ in D)
 F2 = C_E * quicksum(z[i, h] for i in N for h in H)
@@ -98,8 +102,12 @@ m.addConstrs((quicksum(x[h,k] for k in K)==v[h] for h in H), name="truck_dock")
 m.addConstrs((x[h,k] + x[g,k]-1 <= n[h,g] + n[g,h] for h in H for g in H if h != g for k in K ) , name="two_trucks_samedock_")
 # constraint 11
 m.addConstrs((n[h,g] + n[g,h] <=1 for h in H for g in H ) , name="only_one_predecesseur")
+# constraint 12
+m.addConstrs((b[g] >= 0 for g in H), name="b_nonneg")
+m.addConstrs((b[g] >= q[h] + V - M*(1 - n[g,h]) for h in H for g in H), name="b_lower_bound")
 
-
+# constraint 13
+m.addConstrs((q[h]==b[h] + I*quicksum(p[i,h] for i in N) for h in H ), name="end_time_sum_load_containers")
 # === Optimisation ===
 m.optimize()
 for v in m.getVars():

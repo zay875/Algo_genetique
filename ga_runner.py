@@ -43,7 +43,7 @@ data_dock = {
 }
 '''
 
-
+'''
 containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
 trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
 docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
@@ -51,7 +51,7 @@ penalties = []  #define this before the for-loop
 INSTANCE_ID = 12
 containers_df = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
 trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
-docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
+docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()'''
 # --- SELECTION ---
 def tournament_selection(population, fitness_values, k=3):
     """Sélection par tournoi (choisit le meilleur parmi k individus aléatoires)."""
@@ -114,22 +114,26 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
 
 # --- MAIN GA LOOP ---
 
-def run_ga(initial_population, fitness_evaluator, num_docks,
-           num_generations=100, num_elites=1, crossover_rate=0.9, mutation_rate=0.03):
+def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, instance_id,
+           num_docks, num_generations=20, num_elites=1, crossover_rate=0.9, mutation_rate=0.03):
+
     """
     Exécute l’algorithme génétique avec suivi du meilleur global.
     """
     population = copy.deepcopy(initial_population)
     best_fitness_history = []
+    penalties = []
+
 
     # 🔹 Variables pour suivre le meilleur global
     global_best_fitness = float('inf')
     global_best_chromosome = None
 
+
     for gen in range(num_generations):
         # 1. Évaluer fitness
         fitness_values = [
-        fitness_evaluator.calculate_fitness(ch, trucks_df, containers_df, instance_id=12)
+        fitness_evaluator.calculate_fitness(ch, instance_id)
         for ch in population
 ]
 
@@ -160,7 +164,7 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
          print(f"Chromosome {i+1}:")
          print(chrom)
          #verify faisability in new population
-         feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id=12)
+         feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id)
          print(f"\nChromosome {i+1} : {' Faisable' if feasible else ' Non faisable'}")
          if not feasible:
             for err in errors:
@@ -178,7 +182,7 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
 
         best_fitness_history.append(global_best_fitness)
         print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
-        penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id=12)
+        penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id)
         penalties.append(penalty_value)
     # 6. Résultat final
     '''plt.plot(best_fitness_history)
@@ -201,7 +205,7 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
     fig, axes = plt.subplots(2, 1, figsize=(8, 6))
 
     # Fitness
-    axes[0].plot(best_fitness_history, color='blue')
+    '''axes[0].plot(best_fitness_history, color='blue')
     axes[0].set_title("GA Convergence (Best Fitness)")
     axes[0].set_xlabel("Generation")
     axes[0].set_ylabel("Fitness")
@@ -218,5 +222,5 @@ def run_ga(initial_population, fitness_evaluator, num_docks,
     plt.show(block=False)
     plt.pause(50)
     plt.close()
-
+    '''
     return global_best_chromosome, global_best_fitness, best_fitness_history

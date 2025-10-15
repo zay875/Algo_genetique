@@ -13,7 +13,7 @@ class FitnessEvaluator:
         self.P_DUP=500   #duplicate penalty
         self.P_DEST =2000  #wrong destination penalty
         self.P_CAP =200   #exceeded cpacity penalty
-        self.P_UNASSIGNED=1000 #unassigned container penalty
+        self.P_UNASSIGNED=1500 #unassigned container penalty
 
     def calculate_truck_cost_f1(self, chromosome):
         trucks_assigned = []
@@ -65,14 +65,11 @@ class FitnessEvaluator:
             if "n'existe pas" in e or "sans camion correspondant" in e:
                 total_penalty += self.P_UNASSIGNED
         return total_penalty, error 
+    
+    def calculate_fitness(self, chromosome, instance_id):
+        penalty, errors = self.calculate_penalties(chromosome, self.trucks_df, self.containers_df, instance_id)
+        cost = self.calculate_truck_cost_f1(chromosome)
+        energy = self.calculate_energy_cost_f2(chromosome)
+        return cost + self.C_E * energy + penalty
 
-    def calculate_fitness(self, chromosome,trucks_df, containers_df, instance_id):
-
-        cost_f1= self.calculate_truck_cost_f1(chromosome)
-        cost_F2=  self.calculate_energy_cost_f2(chromosome)
-        # ✅ call the penalty function
-        penalty, errors = self.calculate_penalties(chromosome, trucks_df, containers_df, instance_id)
-        total_fitness = self.W1 * cost_f1 + self.W2 * cost_F2 + penalty
-
-        return  total_fitness
                
