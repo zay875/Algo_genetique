@@ -1,3 +1,4 @@
+
 # run_all_instances.py
 import pandas as pd
 import time
@@ -30,7 +31,7 @@ for instance_id in instances:
         containers_df=cont_i,
         trucks_df=trucks_i,
         docks_df=docks_i,
-        instance_id=instance_id
+        instance_id=instance_id,ratio_binpacking=0.0
     )
 
     # Évaluateur de fitness
@@ -45,7 +46,7 @@ for instance_id in instances:
         trucks_i,
         instance_id,
         len(docks_i),
-        num_generations=5
+        num_generations=20
 )
 
 
@@ -66,5 +67,5 @@ for instance_id in instances:
 
 
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary.csv", index=False)
-print("\n✅ Tous les résultats enregistrés dans results_summary.csv")
+results_df.to_csv("results_summary_ramdom_pop.csv", index=False)
+print("\n✅ Tous les résultats enregistrés dans results_summary_random_pop.csv")

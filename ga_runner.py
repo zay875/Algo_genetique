@@ -115,7 +115,7 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
 # --- MAIN GA LOOP ---
 
 def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, instance_id,
-           num_docks, num_generations=20, num_elites=1, crossover_rate=0.9, mutation_rate=0.03):
+           num_docks, num_generations=10, num_elites=1, crossover_rate=0.9, mutation_rate=0.03):
 
     """
     Exécute l’algorithme génétique avec suivi du meilleur global.
@@ -128,15 +128,18 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
     # 🔹 Variables pour suivre le meilleur global
     global_best_fitness = float('inf')
     global_best_chromosome = None
-
+    fitness_cache = {}
 
     for gen in range(num_generations):
-        # 1. Évaluer fitness
-        fitness_values = [
-        fitness_evaluator.calculate_fitness(ch, instance_id)
-        for ch in population
-]
+        # --- Calcul du fitness avec cache ---
+        fitness_cache = {}
+        fitness_values = []
 
+        for chrom in population:
+            key = str(chrom)
+            if key not in fitness_cache:
+                fitness_cache[key] = fitness_evaluator.calculate_fitness(chrom, instance_id)
+            fitness_values.append(fitness_cache[key])
 
         # 2. Garder élites
         elites = elitism_selection(population, fitness_values, num_elites)
@@ -159,16 +162,17 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         # 4. Nouvelle population
         population = elites + offspring
         #afficher la nouvelle generation
+        
         print(f"\n=== Génération {gen+1} : Nouvelle population ===")
-        for i, chrom in enumerate(population):
-         print(f"Chromosome {i+1}:")
-         print(chrom)
+        #for i, chrom in enumerate(population):
+         #print(f"Chromosome {i+1}:")
+         #print(chrom)
          #verify faisability in new population
-         feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id)
-         print(f"\nChromosome {i+1} : {' Faisable' if feasible else ' Non faisable'}")
-         if not feasible:
-            for err in errors:
-             print("   ", err)
+         #feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id)
+         #print(f"\nChromosome {i+1} : {' Faisable' if feasible else ' Non faisable'}")
+         #if not feasible:
+            #for err in errors:
+             #print("   ", err)
         
         
           
@@ -181,7 +185,7 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
             global_best_chromosome = copy.deepcopy(current_best_chromosome)
 
         best_fitness_history.append(global_best_fitness)
-        print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
+        #print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
         penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id)
         penalties.append(penalty_value)
     # 6. Résultat final

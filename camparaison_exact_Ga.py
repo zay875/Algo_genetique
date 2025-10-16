@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 ga = pd.read_csv("results_summary.csv")
 exact = pd.read_csv("results_exact_summary.csv")
 
-# Nettoyer / normaliser les colonnes
+# Nettoyer / normaliser les colonnes   
 ga["Instance"] = ga["Instance"].astype(int)
 exact["Instance"] = exact["Instance"].astype(int)
 
@@ -24,14 +24,14 @@ merged["Gap(%)"] = merged.apply(
 )
 
 
-print("\n=== 🔍 Comparaison GA vs Exact ===")
+print("\n=== Comparaison GA vs Exact ===")
 print(merged[["Instance", "BestFitness", "Objective", "Gap(%)", "ExecutionTime(s)_GA", "ExecutionTime(s)_Exact"]])
 
 
 print("\n📊 Moyenne de l'écart (%) :", merged["Gap(%)"].mean())
 # === Sauvegarder le récapitulatif ===
 output_file = "comparison_summary.csv"
-merged.to_csv(output_file, index=False)
+merged[["Instance", "BestFitness", "Objective", "Gap(%)", "ExecutionTime(s)_GA", "ExecutionTime(s)_Exact"]].to_csv(output_file, index=False)
 print(f"\n💾 Résumé sauvegardé dans {output_file}")
 # Graphique de comparaison
 plt.figure(figsize=(10,6))

@@ -31,10 +31,10 @@ all_containers, all_trucks, all_docks, all_params = [], [], [], []
 
 for idx in range(1, num_instances + 1):
     # Randomized parameters for each instance
-    D = random.randint(1, 4)    # number of destinations
-    N = random.randint(2, 12)   # number of containers
-    H = random.randint(4, 8)    # number of trucks
-    K = random.randint(2, 6)    # number of docks
+    D = random.randint(2, 5)    # number of destinations
+    N = random.randint(4, 13)   # number of containers
+    H = random.randint(5, 10)    # number of trucks
+    K = random.randint(3, 7)    # number of docks
 
     c, t, d, p = generate_instance(instance_id=idx, D=D, N=N, H=H, K=K, Q=6, CE=0.5)
     all_containers.append(c)

@@ -116,13 +116,25 @@ for instance_id in instances:
     m.addConstrs((q[h] == b[h] + I * quicksum(p[i, h] for i in N) for h in H))
 
     # === Résolution ===
-    m.setParam("OutputFlag", 0)  # ne pas afficher le solveur
+   # === Résolution ===
+# --- Gurobi parameters to encourage feasible solutions ---
+    #m.Params.OutputFlag = 1       # show progress
+    #m.Params.TimeLimit = 120      # stop after 2 minutes
+    #m.Params.MIPFocus = 1         # focus on finding *any* feasible solution
+    #m.Params.MIPGap = 0.05        # accept solution within 5% of optimum
+    #m.Params.PoolSolutions = 10   # store multiple feasible solutions (optional)
+    #m.Params.PoolSearchMode = 2   # explore more feasible solutions
+
+    # --- Solve ---
     start_time = time.time()
     m.optimize()
     exec_time = round(time.time() - start_time, 3)
 
+
     # === Résultats ===
     if m.Status == GRB.OPTIMAL:
+        for v in m.getVars():
+            print('%s %g' % (v.VarName, v.X))
         print(f"✅ Instance {instance_id} résolue : objectif = {m.ObjVal:.2f} | Temps = {exec_time}s")
         results.append({
             "Instance": instance_id,
@@ -140,7 +152,6 @@ for instance_id in instances:
             "UsedTrucks": None,
             "ExecutionTime(s)": exec_time
         })
-
 # === Sauvegarde des résultats ===
 df_results = pd.DataFrame(results)
 df_results.to_csv("results_exact_summary.csv", index=False)
