@@ -66,10 +66,15 @@ class FitnessEvaluator:
                 total_penalty += self.P_UNASSIGNED
         return total_penalty, error 
     
-    def calculate_fitness(self, chromosome, instance_id):
+    def calculate_fitness(self, chromosome, instance_id, include_penalty=True):
         penalty, errors = self.calculate_penalties(chromosome, self.trucks_df, self.containers_df, instance_id)
         cost = self.calculate_truck_cost_f1(chromosome)
         energy = self.calculate_energy_cost_f2(chromosome)
-        return cost + self.C_E * energy + penalty
+        
+        if include_penalty:
+            return cost + energy + penalty
+        else:
+            return cost + energy
+
 
                

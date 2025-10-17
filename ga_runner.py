@@ -138,7 +138,8 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         for chrom in population:
             key = str(chrom)
             if key not in fitness_cache:
-                fitness_cache[key] = fitness_evaluator.calculate_fitness(chrom, instance_id)
+                fitness_cache[key] = fitness_evaluator.calculate_fitness(chrom, instance_id, include_penalty=True)
+
             fitness_values.append(fitness_cache[key])
 
         # 2. Garder élites
@@ -163,7 +164,7 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         population = elites + offspring
         #afficher la nouvelle generation
         
-        print(f"\n=== Génération {gen+1} : Nouvelle population ===")
+        #print(f"\n=== Génération {gen+1} : Nouvelle population ===")
         #for i, chrom in enumerate(population):
          #print(f"Chromosome {i+1}:")
          #print(chrom)
@@ -175,19 +176,21 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
              #print("   ", err)
         
         
-          
+             
         # 5. Suivi du meilleur global
         current_best_fitness = min(fitness_values)
         current_best_chromosome = population[np.argmin(fitness_values)]
-
+      
         if current_best_fitness < global_best_fitness:
             global_best_fitness = current_best_fitness
             global_best_chromosome = copy.deepcopy(current_best_chromosome)
-
+        
+      
         best_fitness_history.append(global_best_fitness)
         #print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
         penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id)
         penalties.append(penalty_value)
+    
     # 6. Résultat final
     '''plt.plot(best_fitness_history)
     plt.xlabel("Generation")
@@ -206,8 +209,8 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
     plt.show()'''
 
     
-    fig, axes = plt.subplots(2, 1, figsize=(8, 6))
-
+    #fig, axes = plt.subplots(2, 1, figsize=(8, 6))
+    #plt.close(fig)
     # Fitness
     '''axes[0].plot(best_fitness_history, color='blue')
     axes[0].set_title("GA Convergence (Best Fitness)")
@@ -227,4 +230,4 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
     plt.pause(50)
     plt.close()
     '''
-    return global_best_chromosome, global_best_fitness, best_fitness_history
+    return global_best_chromosome, global_best_fitness,best_fitness_history

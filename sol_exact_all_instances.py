@@ -54,13 +54,13 @@ for instance_id in instances:
     m = Model(f"Instance_{instance_id}_Transport_Energie")
 
     # Variables
-    a = m.addVars(H, D, vtype=GRB.BINARY, name="a")
-    x = m.addVars(H, K, vtype=GRB.BINARY, name="x")
-    p = m.addVars(N, H, vtype=GRB.BINARY, name="p")
-    z = m.addVars(N, H, vtype=GRB.CONTINUOUS, name="z")
+    a = m.addVars(H, D, vtype=GRB.BINARY, name="a")# d is destination of the truck h
+    x = m.addVars(H, K, vtype=GRB.BINARY, name="x") #truck h is assigned to dock k
+    p = m.addVars(N, H, vtype=GRB.BINARY, name="p")# container n is assigned to truck h
+    z = m.addVars(N, H, vtype=GRB.CONTINUOUS, name="z") #area
     d_abs = m.addVars(N, K, vtype=GRB.CONTINUOUS, name="d_abs")
     v_used = m.addVars(H, vtype=GRB.BINARY, name="v")
-    n = m.addVars(H, H, vtype=GRB.BINARY, name="n")
+    n = m.addVars(H, H, vtype=GRB.BINARY, name="n") #same dock for two trucks
     b = m.addVars(H, vtype=GRB.CONTINUOUS, name="b")
     q = m.addVars(H, vtype=GRB.CONTINUOUS, name="q")
 

@@ -132,7 +132,7 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
                     empty_truck = empty_trucks[0]
                     empty_truck["AssignedContainers"].append(c_id)
                     empty_truck["Capacity"] -= length
-                    print(f"⚠️ Conteneur {c_id} (dest {dest_id}) assigné à un camion VIDE (dest {empty_truck['Destination']})")
+                    #print(f"⚠️ Conteneur {c_id} (dest {dest_id}) assigné à un camion VIDE (dest {empty_truck['Destination']})")
 
                 else:
                     # 3️⃣ Aucun camion vide ou compatible disponible
@@ -148,11 +148,12 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
         trucks_assigned_containers_list[truck_id] = truck_assigned_list
 
     # --- Affichage des conteneurs non assignés ---
+    '''
     if unassigned_containers:
         print(f"Conteneurs non assignés : {unassigned_containers}")
     else:
         print(" Tous les conteneurs ont été assignés.")
-
+    '''
     return trucks_assigned_containers_list
 
 
