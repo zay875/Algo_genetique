@@ -1,4 +1,4 @@
-Instance,BestFitness,ExecutionTime(s),PopulationSize,Generations
+Instance,BestFitness_random,ExecutionTime(s)_random,PopulationSize,Generations
 1,1230.25,0.411,10,20
 2,2347.5,0.431,10,20
 3,11556.0,0.527,10,20

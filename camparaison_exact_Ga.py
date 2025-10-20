@@ -5,16 +5,21 @@ import matplotlib.pyplot as plt
 # Charger les fichiers
 ga = pd.read_csv("results_summary.csv")
 exact = pd.read_csv("results_exact_summary.csv")
-
+random = pd.read_csv("results_summary_ramdom_pop.csv")
 # Nettoyer / normaliser les colonnes   
 ga["Instance"] = ga["Instance"].astype(int)
 exact["Instance"] = exact["Instance"].astype(int)
-
+random ["Instance"] = random["Instance"].astype(int)
 # Garder uniquement les instances résolues par Gurobi (Status = Optimal)
 exact_opt = exact[exact["Status"] == "Optimal"].copy()
 
 # Fusion sur la colonne Instance
+# Fusion GA + Exact
 merged = pd.merge(ga, exact_opt, on="Instance", suffixes=("_GA", "_Exact"))
+
+# Puis fusionner avec Random
+merged = pd.merge(merged, random, on="Instance")
+
 
 # Calculer le pourcentage d'écart
 merged["Gap(%)"] = merged.apply(
@@ -25,18 +30,19 @@ merged["Gap(%)"] = merged.apply(
 
 
 print("\n=== Comparaison GA vs Exact ===")
-print(merged[["Instance", "BestFitness", "Objective", "Gap(%)", "ExecutionTime(s)_GA", "ExecutionTime(s)_Exact"]])
+print(merged[["Instance", "BestFitness","BestFitness_random", "Objective", "Gap(%)", "ExecutionTime(s)_GA", "ExecutionTime(s)_Exact"]])
 
 
 print("\n📊 Moyenne de l'écart (%) :", merged["Gap(%)"].mean())
 # === Sauvegarder le récapitulatif ===
 output_file = "comparison_summary.csv"
-merged[["Instance", "BestFitness", "Objective", "Gap(%)", "ExecutionTime(s)_GA", "ExecutionTime(s)_Exact"]].to_csv(output_file, index=False)
+merged[["Instance", "BestFitness","BestFitness_random", "Objective", "Gap(%)", "ExecutionTime(s)_GA","ExecutionTime(s)_random", "ExecutionTime(s)_Exact"]].to_csv(output_file, index=False)
 print(f"\n💾 Résumé sauvegardé dans {output_file}")
 # Graphique de comparaison
 plt.figure(figsize=(10,6))
 plt.plot(merged["Instance"], merged["Objective"], label="Exact (Optimal)", marker="o")
 plt.plot(merged["Instance"], merged["BestFitness"], label="GA (Best Fitness)", marker="s")
+plt.plot(merged["Instance"], merged["BestFitness_random"], label="GA (Best Fitness_random)", marker="^")
 plt.xlabel("Instance")
 plt.ylabel("Objective Value")
 plt.title("Comparaison : GA vs Modèle Exact (Gurobi)")
