@@ -67,7 +67,7 @@ for instance_id in instances:
     # === Objectif ===
     F1 = quicksum(C_d[d] * a[h, d] for h in H for d in D)
     F2 = C_E * quicksum(z[i, h] for i in N for h in H)
-    m.setObjective(W1 * F1 + W2 * F2 + 1e-4 * quicksum(k * x[h, k] for h in H for k in K), GRB.MINIMIZE)
+    m.setObjective(W1 * F1 + W2 * F2, GRB.MINIMIZE)
 
     # === Contraintes principales ===
     # (1) Chaque conteneur assigné à un camion
