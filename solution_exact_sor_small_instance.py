@@ -51,7 +51,7 @@ Q = int(trucks_df["Capacity"].iloc[0]) if not trucks_df.empty else 6
 
 P = containers_df["Position"].tolist()
 L = containers_df["Length"].tolist()
-R = containers_df["Position"].tolist()
+R = docks_df["Position"].tolist()
 
 
 
@@ -165,6 +165,8 @@ else:
             "UsedTrucks": None,
             "ExecutionTime(s)": exec_time
         })
+print(f"results of F1: {F1}")
+print(f"results of F2: {F2}")
 df_results = pd.DataFrame(results)
 df_results.to_csv("results_exact_summary__small_instance.csv", index=False)
 

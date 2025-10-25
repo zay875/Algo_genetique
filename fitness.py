@@ -36,7 +36,7 @@ class FitnessEvaluator:
             for c in containers:
                 info = self.containers_df[self.containers_df['ContainerID'] == c].iloc[0]
                 pos, length = info['Position'], info['Length']
-                z = 2 * abs(pos - dock) + 1 * length
+                z = 2 * abs(pos - dock) + 10 * length
                 total += self.C_E * z
         return total
     
@@ -70,11 +70,14 @@ class FitnessEvaluator:
         penalty, errors = self.calculate_penalties(chromosome, self.trucks_df, self.containers_df, instance_id)
         cost = self.calculate_truck_cost_f1(chromosome)
         energy = self.calculate_energy_cost_f2(chromosome)
-        
+        # Combine cost and energy using the configured weights W1 and W2.
+        # This matches formulations where the objective is a weighted sum, e.g. 0.5*F1 + 0.5*F2.
+        fitness_value = self.W1 * cost + self.W2 * energy
+
         if include_penalty:
-            return cost + energy + penalty
-        else:
-            return cost + energy
+            fitness_value += penalty
+
+        return fitness_value
 
 
                

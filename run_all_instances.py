@@ -33,8 +33,9 @@ for instance_id in instances:
         instance_id=instance_id,ratio_binpacking=0.2
     )
 
-    # Évaluateur de fitness
-    fitness_eval = FitnessEvaluator(cont_i, trucks_i, C_E=0.5)
+
+    # Évaluateur de fitness (weights W1 and W2 explicit for clarity)
+    fitness_eval = FitnessEvaluator(cont_i, trucks_i, C_E=0.5, W1=0.5, W2=0.5)
 
         # Exécution du GA
     start_time = time.time()
@@ -50,17 +51,19 @@ for instance_id in instances:
     penalty_value, _ = fitness_eval.calculate_penalties(best_chrom, trucks_i, cont_i, instance_id)
     cost = fitness_eval.calculate_truck_cost_f1(best_chrom)
     energy = fitness_eval.calculate_energy_cost_f2(best_chrom)
-    true_fitness = cost + fitness_eval.C_E * energy  # "real" fitness (without penalties)
-
+    
+    # Final fitness using configured weights and including penalties
+    final_fitness = fitness_eval.calculate_fitness(best_chrom, instance_id, include_penalty=False)
+    
     exec_time = time.time() - start_time
     print(f"meuilleur chromomosome : {best_chrom}")
 
 
     # Résultats détaillés
-    print(f"⏱ Temps : {exec_time:.2f}s | Fitness = {true_fitness}")
+    print(f"⏱ Temps : {exec_time:.2f}s | Fitness = {final_fitness}")
     results.append({
         "Instance": instance_id,
-        "BestFitness": true_fitness,
+        "BestFitness": final_fitness,
         "ExecutionTime(s)": round(exec_time, 3),
         "PopulationSize": len(population),
         "Generations": 20
