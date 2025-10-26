@@ -15,26 +15,26 @@ docks_df = pd.read_csv("docks_all.csv")
 # Récupérer toutes les instances existantes
 #instances = sorted(containers_df["Instance"].unique())
 data_container = {
-    'ContainerID': [1, 2, 3],
-    'Length': [2, 4, 2],
-    'Position': [57, 63, 58],
-    'Destination' : [2,2,2],
-    'Instance': [1, 1, 1]
+    'ContainerID': [1, 2, 3,4],
+    'Length': [2, 5, 3 ,5],
+    'Position': [38, 17, 48,28],
+    'Destination' : [1,2,2,1],
+    'Instance': [2,2 ,2,2]
 }
 
 data_truck = {
-    'TruckID': [1, 2],
-    'Destination': [1,2],
-    'Cost': [624 ,479],
-    'Capacity':[6,6],
-    'DockPosition':[1,2],
-    'Instance': [1, 1]
+    'TruckID': [1, 2,3],
+    'Destination': [1,1,2],
+    'Cost': [608 ,608,705],
+    'Capacity':[6,6,6],
+    'DockPosition':[4,6,6],
+    'Instance': [2,2,2]
 }
 data_docks={
-'DockID':[1,2],
-'Position':[1,2],'Instance': [1, 1]
+'DockID':[1,2,3],
+'Position':[4,6,6],'Instance': [2,2,2]
 }
-instance_id = 1
+instance_id = 2
 containers_df = pd.DataFrame(data_container)
 trucks_df = pd.DataFrame(data_truck)
 docks_df = pd.DataFrame(data_docks)
@@ -102,5 +102,5 @@ results.append({
 
 print("salut")
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary_GA_for_small_instance.csv", index=False)
-print("\n✅ Tous les résultats enregistrés dans results_summary_GA_for_small_instance.csv")
+results_df.to_csv("results_summary_GA_for_small_instance_2.csv", index=False)
+print("\n✅ Tous les résultats enregistrés dans results_summary_GA_for_small_instance_2.csv")

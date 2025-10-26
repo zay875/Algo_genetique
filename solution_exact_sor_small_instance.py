@@ -9,26 +9,26 @@ import sys
 import time
 # === Données ===
 data_container = {
-    'ContainerID': [1, 2, 3],
-    'Length': [2, 4, 2],
-    'Position': [57, 63, 58],
-    'Destination' : [2,2,2],
-    'Instance': [1, 1, 1]
+    'ContainerID': [1, 2, 3,4],
+    'Length': [2, 5, 3 ,5],
+    'Position': [38, 17, 48,28],
+    'Destination' : [1,2,2,1],
+    'Instance': [2,2 ,2,2]
 }
 
 data_truck = {
-    'TruckID': [1, 2],
-    'Destination': [1,2],
-    'Cost': [624 ,479],
-    'Capacity':[6,6],
-    'DockPosition':[1,2],
-    'Instance': [1, 1]
+    'TruckID': [1, 2,3],
+    'Destination': [1,1,2],
+    'Cost': [608 ,608,705],
+    'Capacity':[6,6,6],
+    'DockPosition':[4,6,6],
+    'Instance': [2,2,2]
 }
 data_docks={
-'DockID':[1,2],
-'Position':[1,2],'Instance': [1, 1]
+'DockID':[1,2,3],
+'Position':[4,6,6],'Instance': [2,2,2]
 }
-instance_id = 1
+instance_id = 2
 containers_df = pd.DataFrame(data_container)
 trucks_df = pd.DataFrame(data_truck)
 docks_df = pd.DataFrame(data_docks)
@@ -95,11 +95,11 @@ m.setObjective(W1 * F1 + W2 * F2, GRB.MINIMIZE)
 # === Contraintes principales ===
     # (1) Chaque conteneur assigné à un camion
 for i in N:
-    m.addConstr(quicksum(p[i, h] for h in H) == 1)
+    m.addConstr(quicksum(p[i, h] for h in H) == 1, name=f"AssignContainer_{i}")
 
     # (2) Capacité
 for h in H:
-    m.addConstr(quicksum(L[i-1] * p[i, h] for i in N) <= Q)
+    m.addConstr(quicksum(L[i-1] * p[i, h] for i in N) <= Q,name=f"CapacityTruck_{h}")
 
     # (3) Valeur absolue pour la distance
 for i in N:
@@ -111,32 +111,32 @@ for i in N:
 for i in N:
     for h in H:
         for k in K:
-            m.addConstr(z[i, h] >= 2 * d_abs[i, k] + Y * L[i-1] - M * (2 - (p[i, h] + x[h, k])))
+            m.addConstr(z[i, h] >= 2 * d_abs[i, k] + Y * L[i-1] - M * (2 - (p[i, h] + x[h, k])),name=f"DefineZ_{i}_{h}_{k}")
 
     # (5) Contrainte de destination
 m.addConstrs((
         p[i, h] + p[j, h] <= quicksum(G[d, i] * G[d, j] for d in D) + 1
         for i in N for j in N if i != j for h in H
-    ))
+    ),name="DestinationConstraint")
 
     # (6) Camion utilisé
-m.addConstrs((p[i, h] <= v_used[h] for h in H for i in N))
+m.addConstrs((p[i, h] <= v_used[h] for h in H for i in N),name="TruckUsedConstraint")
 
     # (7) Destination du camion
-m.addConstrs((a[h, d] <= G[d, i] + 1 - p[i, h] for i in N for h in H for d in D))
-m.addConstrs((v_used[h] == quicksum(a[h, d] for d in D) for h in H))
+m.addConstrs((a[h, d] <= G[d, i] + 1 - p[i, h] for i in N for h in H for d in D),name="TruckDestinationConstraint")
+m.addConstrs((v_used[h] == quicksum(a[h, d] for d in D) for h in H),name="TruckUsedDestinationLink")
 
     # (8) Assignation au quai
-m.addConstrs((quicksum(x[h, k] for k in K) == v_used[h] for h in H))
+m.addConstrs((quicksum(x[h, k] for k in K) == v_used[h] for h in H),name="DockAssignmentConstraint")
 
     # (9) Contraintes d’ordre sur les quais
 m.addConstrs((x[h, k] + x[g, k] - 1 <= n[h, g] + n[g, h] for h in H for g in H if h != g for k in K))
-m.addConstrs((n[h, g] + n[g, h] <= 1 for h in H for g in H))
+m.addConstrs((n[h, g] + n[g, h] <= 1 for h in H for g in H),name="DockOrderConstraint")
 
     # (10) Timing
-m.addConstrs((b[g] >= 0 for g in H))
-m.addConstrs((b[g] >= q[h] + V - M * (1 - n[g, h]) for h in H for g in H))
-m.addConstrs((q[h] == b[h] + I * quicksum(p[i, h] for i in N) for h in H))
+m.addConstrs((b[g] >= 0 for g in H),name="NonNegativeStartTime")
+m.addConstrs((b[g] >= q[h] + V - M * (1 - n[g, h]) for h in H for g in H),name="TimingConstraint")
+m.addConstrs((q[h] == b[h] + I * quicksum(p[i, h] for i in N) for h in H),name="ServiceTimeConstraint")
 
     # --- Solve ---
 start_time = time.time()
@@ -168,12 +168,12 @@ else:
 print(f"results of F1: {F1}")
 print(f"results of F2: {F2}")
 df_results = pd.DataFrame(results)
-df_results.to_csv("results_exact_summary__small_instance.csv", index=False)
+df_results.to_csv("results_exact_summary__small_instance_2.csv", index=False)
 
 # do IIS
-'''print("The model is infeasible; computing IIS")
+print("The model is infeasible; computing IIS")
 m.computeIIS()
-if m.IISMinimal:
+if m.IISMinimal: 
     print("IIS is minimal\n")
 else:
     print("IIS is not minimal\n")
@@ -182,4 +182,4 @@ for c in m.getConstrs():
     if c.IISConstr:
         print(c.ConstrName)
 
-'''
+
