@@ -23,16 +23,16 @@ data_container = {
 }
 
 data_truck = {
-    'TruckID': [1, 2,3],
-    'Destination': [1,1,2],
-    'Cost': [608 ,608,705],
-    'Capacity':[6,6,6],
-    'DockPosition':[4,6,6],
-    'Instance': [2,2,2]
+    'TruckID': [1, 2,3,4],
+    'Destination': [1,1,2,3],
+    'Cost': [608 ,608,705,504],
+    'Capacity':[6,6,6,6],
+    'DockPosition':[4,6,6,2],
+    'Instance': [2,2,2,2]
 }
-data_docks={
-'DockID':[1,2,3],
-'Position':[4,6,6],'Instance': [2,2,2]
+data_docks={ 
+'DockID':[1,2,3,4],
+'Position':[4,6,6,2],'Instance': [2,2,2,2]
 }
 instance_id = 2
 containers_df = pd.DataFrame(data_container)

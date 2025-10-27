@@ -74,7 +74,7 @@ print(merged[cols_to_show])
 print("\n📊 Moyenne de l'écart (%) :", merged["Gap(%)"].mean())
 
 # === Sauvegarder le récapitulatif ===
-output_file = "comparison_summary.csv"
+output_file = "comparison_summary_after_ading_dock_condtraint.csv"
 save_cols = ["Instance"]
 if "BestFitness_GA" in merged.columns:
     save_cols.append("BestFitness_GA")

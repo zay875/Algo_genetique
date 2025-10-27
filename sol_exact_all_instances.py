@@ -105,7 +105,10 @@ for instance_id in instances:
 
     # (8) Assignation au quai
     m.addConstrs((quicksum(x[h, k] for k in K) == v_used[h] for h in H))
-
+      
+    #ajouter une limite pour les quai utilisé, max 2 camions sur le quai
+    m.addConstrs((quicksum(x[h, k] for h in H) <= 2 for k in K),
+             name="DockCapacityConstraint")
     # (9) Contraintes d’ordre sur les quais
     m.addConstrs((x[h, k] + x[g, k] - 1 <= n[h, g] + n[g, h] for h in H for g in H if h != g for k in K))
     m.addConstrs((n[h, g] + n[g, h] <= 1 for h in H for g in H))

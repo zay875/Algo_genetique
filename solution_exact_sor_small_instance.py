@@ -16,17 +16,18 @@ data_container = {
     'Instance': [2,2 ,2,2]
 }
 
+
 data_truck = {
-    'TruckID': [1, 2,3],
-    'Destination': [1,1,2],
-    'Cost': [608 ,608,705],
-    'Capacity':[6,6,6],
-    'DockPosition':[4,6,6],
-    'Instance': [2,2,2]
+    'TruckID': [1, 2,3,4],
+    'Destination': [1,1,2,3],
+    'Cost': [608 ,608,705,504],
+    'Capacity':[6,6,6,6],
+    'DockPosition':[4,6,6,2],
+    'Instance': [2,2,2,2]
 }
-data_docks={
-'DockID':[1,2,3],
-'Position':[4,6,6],'Instance': [2,2,2]
+data_docks={ 
+'DockID':[1,2,3,4],
+'Position':[4,7,6,2],'Instance': [2,2,2,2]
 }
 instance_id = 2
 containers_df = pd.DataFrame(data_container)
@@ -43,7 +44,7 @@ D = sorted(trucks_df["Destination"].unique())
 C_d = {int(row["Destination"]): int(row["Cost"]) for _, row in trucks_df.iterrows()}
 C_E = 0.5
 W1, W2 = 0.5, 0.5
-M = 1000
+M = 100
 Y = 10
 V = 5
 I = 5
@@ -128,6 +129,10 @@ m.addConstrs((v_used[h] == quicksum(a[h, d] for d in D) for h in H),name="TruckU
 
     # (8) Assignation au quai
 m.addConstrs((quicksum(x[h, k] for k in K) == v_used[h] for h in H),name="DockAssignmentConstraint")
+#ajouter une limite pour les quai utilisé, max 2 camions sur le quai
+m.addConstrs((quicksum(x[h, k] for h in H) <= 2 for k in K),
+             name="DockCapacityConstraint")
+
 
     # (9) Contraintes d’ordre sur les quais
 m.addConstrs((x[h, k] + x[g, k] - 1 <= n[h, g] + n[g, h] for h in H for g in H if h != g for k in K))
@@ -171,15 +176,16 @@ df_results = pd.DataFrame(results)
 df_results.to_csv("results_exact_summary__small_instance_2.csv", index=False)
 
 # do IIS
-print("The model is infeasible; computing IIS")
-m.computeIIS()
-if m.IISMinimal: 
-    print("IIS is minimal\n")
-else:
-    print("IIS is not minimal\n")
-print("\nThe following constraint(s) cannot be satisfied:")
-for c in m.getConstrs():
-    if c.IISConstr:
-        print(c.ConstrName)
+if m.Status == GRB.INFEASIBLE:
+    print("The model is infeasible; computing IIS")
+    m.computeIIS()
+    if m.IISMinimal: 
+        print("IIS is minimal\n")
+    else:
+        print("IIS is not minimal\n")
+    print("\nThe following constraint(s) cannot be satisfied:")
+    for c in m.getConstrs():
+        if c.IISConstr:
+            print(c.ConstrName)
 
 
