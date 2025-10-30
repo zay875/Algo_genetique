@@ -5,11 +5,13 @@ from population import generate_initial_population
 from fitness import FitnessEvaluator
 from ga_runner import run_ga
 from utils import print_chromosome_assignments
-
+from binpacking import calculate_loading_times_df
+import os
 # Charger les CSV (chemins relatifs)
-containers_df = pd.read_csv("containers_all.csv")
-trucks_df = pd.read_csv("trucks_all.csv")
-docks_df = pd.read_csv("docks_all.csv")
+#utilisant les données génerer la deuxiéme fois avec les docks doublons corrigées
+containers_df = pd.read_csv("instances_v2/containers_all.csv")
+trucks_df = pd.read_csv("instances_v2/trucks_all.csv")
+docks_df = pd.read_csv("instances_v2/docks_all.csv")
 
 # Récupérer toutes les instances existantes
 instances = sorted(containers_df["Instance"].unique())
@@ -54,7 +56,12 @@ for instance_id in instances:
     
     # Final fitness using configured weights and including penalties
     final_fitness = fitness_eval.calculate_fitness(best_chrom, instance_id, include_penalty=False)
-    
+    Times_df=calculate_loading_times_df(best_chrom, trucks_df=trucks_i, docks_df=docks_i)
+   #save loading times in files
+    os.makedirs("results_loading_times", exist_ok=True)  # crée le dossier s’il n’existe pas
+    Times_df.to_excel(f"results_loading_times/instance_{instance_id}_times.xlsx", index=False)
+
+   
     exec_time = time.time() - start_time
     print(f"meuilleur chromomosome : {best_chrom}")
 
@@ -73,5 +80,5 @@ for instance_id in instances:
 
 
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary.csv", index=False)
-print("\n✅ Tous les résultats enregistrés dans results_summary.csv")
+results_df.to_csv("results_summary_with_time_loading.csv", index=False)
+print("\n✅ Tous les résultats enregistrés dans results_summary_with_time_loading.csv.csv")

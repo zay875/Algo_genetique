@@ -89,7 +89,9 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
             'Destination': row['Destination'],
             'AssignedContainers': [],
             'AssignedDockID': assigned_dock_id,
-            'AssignedDockPosition': assigned_dock_position
+            'AssignedDockPosition': assigned_dock_position,
+            'start_loading_time': 0,
+            'end_loading_time': 0
         })
 
     # --- Regrouper les conteneurs par destination (tri décroissant par longueur) ---
@@ -166,3 +168,56 @@ def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df):
         dock_position = dock_positions[truck_id % len(dock_positions)]
         chromosome.extend([assigned, 0, dock_position, 0])
     return chromosome
+# --- Functions from binpacking.ipynb ---
+def calculate_loading_times_df(chromosome, trucks_df, docks_df):
+    """
+    Calculates loading times for each truck based on the chromosome and returns a DataFrame.
+    """
+    truck_ids = trucks_df['TruckID'].tolist()
+    dock_posi = docks_df['Position'].tolist()  # ✅ DockID au lieu de Position
+    service_time_per_container = 1 # Assuming 1 unit of time per container
+    changeover_time = 5 #
+
+    # Extract truck information from the chromosome and create a temporary truck list
+    truck_list = []
+    for i in range(0, len(chromosome), 4):
+        truck_index = i // 4
+        if truck_index < len(truck_ids):
+            truck_id = truck_ids[truck_index]
+            assigned_containers = chromosome[i]
+            assigned_dock_position = chromosome[i+2]
+            truck_list.append({
+                'TruckID': truck_id,
+                'AssignedContainers': assigned_containers,
+                'AssignedDockPosition': assigned_dock_position,
+                'start_loading_time': 0,
+                'end_loading_time': 0
+            })
+
+    # Sort trucks by assigned dock position and then by TruckID to ensure consistent ordering
+    truck_list.sort(key=lambda x: (x['AssignedDockPosition'], x['TruckID']))
+
+    dock_completion_times = {dock_pos: 0 for dock_pos in dock_posi}
+
+    
+    loading_times_data = []
+    for truck in truck_list:
+        assigned_dock_position = truck['AssignedDockPosition']
+        if assigned_dock_position not in dock_completion_times:
+            print(f"⚠️ Dock {assigned_dock_position} non trouvé dans cette instance.")
+            print("→ Docks disponibles :", list(dock_completion_times.keys()))
+            continue
+
+        truck['start_loading_time'] = dock_completion_times[assigned_dock_position] + changeover_time
+        truck['end_loading_time'] = truck['start_loading_time'] + service_time_per_container * len(truck['AssignedContainers'])
+        dock_completion_times[assigned_dock_position] = truck['end_loading_time']
+
+        loading_times_data.append({
+            'TruckID': truck['TruckID'],
+            # 'AssignedDockID': truck['AssignedDockID'], # Dock ID is not in chromosome
+            'AssignedDockPosition': truck['AssignedDockPosition'],
+            'start_loading_time': truck['start_loading_time'],
+            'end_loading_time': truck['end_loading_time']
+        })
+    loading_times_df = pd.DataFrame(loading_times_data)
+    return loading_times_df

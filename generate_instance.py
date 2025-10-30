@@ -44,10 +44,10 @@ for idx in range(1, num_instances + 1):
     all_params.append(p)
 
 # ==== Save Outputs ====
-pd.concat(all_containers).to_csv("containers_all.csv", index=False)
-pd.concat(all_trucks).to_csv("trucks_all.csv", index=False)
-pd.concat(all_docks).to_csv("docks_all.csv", index=False)
-pd.concat(all_params).to_csv("parameters_all.csv", index=False)
+pd.concat(all_containers).to_csv("instances_v2/containers_all.csv", index=False)
+pd.concat(all_trucks).to_csv("instances_v2/trucks_all.csv", index=False)
+pd.concat(all_docks).to_csv("instances_v2/docks_all.csv", index=False)
+pd.concat(all_params).to_csv("instances_v2/parameters_all.csv", index=False)
 
 print(" 30 random instances generated and saved using modular architecture.")
 
