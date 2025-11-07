@@ -67,15 +67,17 @@ class FitnessEvaluator:
         return total_penalty, error 
     
     def calculate_fitness(self, chromosome, instance_id, include_penalty=True):
-        penalty, errors = self.calculate_penalties(chromosome, self.trucks_df, self.containers_df, instance_id)
+        #penalty, errors = self.calculate_penalties(chromosome, self.trucks_df, self.containers_df, instance_id)
         cost = self.calculate_truck_cost_f1(chromosome)
         energy = self.calculate_energy_cost_f2(chromosome)
         # Combine cost and energy using the configured weights W1 and W2.
         # This matches formulations where the objective is a weighted sum, e.g. 0.5*F1 + 0.5*F2.
         fitness_value = self.W1 * cost + self.W2 * energy
 
-        if include_penalty:
-            fitness_value += penalty
+        '''
+        '''
+        #if include_penalty:
+            #fitness_value += penalty
 
         return fitness_value
 

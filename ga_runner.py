@@ -5,53 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from utils import  verify_solution_feasibility
-'''
-data = {
-    'Container': [1, 2, 3, 4, 5, 6],
-    'Length': [2, 4, 2, 5, 10, 4],
-    'Position': [57, 63, 58, 49, 26, 71],
-    'Destination' : [2,2,2,1,1,2]
-}
 
-data_2 = {
-    'Truck': [1, 2,3,4,5],
-    'Destination': [1, 1,2,2,2],
-    'Cost': [624,624, 479,479,479]
-}
-Truck_cost_df = pd.DataFrame(data_2)
-data_containers = {
-    'Instance': [12, 12, 12, 12, 12, 12],
-    'ContainerID': [1, 2, 3, 4, 5, 6],
-    'Length': [2, 4, 2, 5, 5, 4],# changed the container length from 10 to 5 because it will never fit in the truck sincr the truck capacity is 6
-    'Position': [57, 63, 58, 49, 26, 71],
-    'Destination': [2, 2, 2, 1, 1, 2]
-}
-
-data_trucks = {
-    'Instance': [12, 12, 12, 12, 12],
-    'TruckID': [1, 2, 3, 4, 5],
-    'Destination': [1, 1, 2, 2, 2],
-    'Cost': [624, 624, 479, 479, 479],
-    'Capacity': [6, 6, 6, 6, 6],
-    'DockPosition': [1, 1, 4, 4, 2]
-}
-
-data_dock = {
-    'Instance': [12, 12, 12, 12, 12],
-    'DockID': [1, 2, 3, 4, 5],
-    'Position': [5, 1, 3, 2, 4]
-}
-'''
-
-'''
-containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
-trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
-docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
-penalties = []  #define this before the for-loop
-INSTANCE_ID = 12
-containers_df = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
-trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
-docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()'''
 # --- SELECTION ---
 def tournament_selection(population, fitness_values, k=3):
     """Sélection par tournoi (choisit le meilleur parmi k individus aléatoires)."""
@@ -79,20 +33,7 @@ def truck_aligned_crossover(parent1, parent2):
 
     return child1, child2
 
-'''def truck_aligned_crossover(parent1, parent2):
-    child1, child2 = [], []
-    for i in range(0, len(parent1), 4):  # iterate trucks
-        block1 = parent1[i:i+4]
-        block2 = parent2[i:i+4]
 
-        if random.random() < 0.5:
-            child1 += block1
-            child2 += block2
-        else:
-            child1 += block2
-            child2 += block1
-
-   return child1, child2'''
 # --- MUTATION ---
 def mutate(chromosome, num_docks, mutation_rate=0.2):
     """
@@ -188,8 +129,8 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
       
         best_fitness_history.append(global_best_fitness)
         #print(f"Gen {gen+1}: Best fitness = {global_best_fitness}")
-        penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id)
-        penalties.append(penalty_value)
+        #penalty_value, _ = fitness_evaluator.calculate_penalties(global_best_chromosome, trucks_df, containers_df, instance_id)
+        #penalties.append(penalty_value)
     
     # 6. Résultat final
     '''plt.plot(best_fitness_history)

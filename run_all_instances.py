@@ -9,9 +9,9 @@ from binpacking import calculate_loading_times_df
 import os
 # Charger les CSV (chemins relatifs)
 #utilisant les données génerer la deuxiéme fois avec les docks doublons corrigées
-containers_df = pd.read_csv("instances_v2/containers_all.csv")
-trucks_df = pd.read_csv("instances_v2/trucks_all.csv")
-docks_df = pd.read_csv("instances_v2/docks_all.csv")
+containers_df = pd.read_csv("instances_v2/containers_all_v2.csv")
+trucks_df = pd.read_csv("instances_v2/trucks_all_v2.csv")
+docks_df = pd.read_csv("instances_v2/docks_all_v2.csv")
 
 # Récupérer toutes les instances existantes
 instances = sorted(containers_df["Instance"].unique())
@@ -63,7 +63,7 @@ for instance_id in instances:
 
    
     exec_time = time.time() - start_time
-    print(f"meuilleur chromomosome : {best_chrom}")
+    #print(f"meuilleur chromomosome : {best_chrom}")
 
 
     # Résultats détaillés
@@ -73,7 +73,8 @@ for instance_id in instances:
         "BestFitness": final_fitness,
         "ExecutionTime(s)": round(exec_time, 3),
         "PopulationSize": len(population),
-        "Generations": 20
+        "Generations": 20,
+        "best_chromosome":best_chrom
     })
 
 # Sauvegarder le résumé global

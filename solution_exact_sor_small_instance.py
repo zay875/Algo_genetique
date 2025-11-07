@@ -162,7 +162,7 @@ if m.Status == GRB.OPTIMAL:
             "ExecutionTime(s)": exec_time
         })
 else:
-    print(f"⚠️ Instance {instance_id} non résolue (status {m.Status}) | Temps = {exec_time}s")
+    print(f"Instance {instance_id} non résolue (status {m.Status}) | Temps = {exec_time}s")
     results.append({
             "Instance": instance_id,
             "Objective": None,

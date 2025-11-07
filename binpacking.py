@@ -2,81 +2,22 @@
 import pandas as pd
 import csv
 # Load dataframes as usual
-'''
-containers_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/containers_all.csv")
-trucks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/trucks_all.csv")
-docks_df = pd.read_csv("C:/Users/Taieb/Algo_genetique/docks_all.csv")
-INSTANCE_ID = 12
-containers_df = containers_df[containers_df["Instance"] == INSTANCE_ID].copy()
-trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
-docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
-'''
-'''
-def process_instance(instance_id, containers_df, trucks_df, docks_df):
-    # --- Filter data for this instance ---
-    # --- Build truck list ---
-    truck_list = []
-    dock_ids = docks_df['DockID'].tolist()
-    num_docks = len(dock_ids)
-    #assignes docks with a round robin structure
-    for i, row in trucks_df.iterrows():
-        assigned_dock_id = dock_ids[i % num_docks]
-        assigned_dock_position = docks_df[docks_df['DockID'] == assigned_dock_id]['Position'].iloc[0]
 
-        truck_list.append({
-            'TruckID': row['TruckID'],
-            'Capacity': row['Capacity'],
-            'InitialCapacity': row['Capacity'],
-            'Destination': row['Destination'],
-            'AssignedContainers': [],
-            'AssignedDockID': assigned_dock_id,
-            'AssignedDockPosition': assigned_dock_position
-        })
-
-    # --- Group containers by destination, sort by length desc ---
+def group_containers_by_destination(containers_df):
     grouped_containers = {}
     for dest_id, group in containers_df.groupby("Destination"):
         grouped_containers[dest_id] = (
             group.sort_values(by="Length", ascending=False)
             .to_dict("records")
         )
-    unassigned_containers = []
-    for dest_id, containers_in_dest in grouped_containers.items():
-        for container in containers_in_dest:
-            length = container["Length"]
-            c_id = container["ContainerID"]
+    return grouped_containers
 
-            # Chercher un camion compatible (même destination et capacité dispo)
-            feasible_trucks = [
-                t for t in truck_list
-                if t["Destination"] == dest_id and t["Capacity"] >= length
-            ]
-
-            if feasible_trucks:
-                # Choisir celui qui a la capacité la plus serrée (meilleur fit)
-                best_truck = min(feasible_trucks, key=lambda x: x["Capacity"])
-                best_truck["AssignedContainers"].append(c_id)
-                best_truck["Capacity"] -= length
-            else:
-                # Aucun camion compatible
-                unassigned_containers.append(c_id)
-
-    max_truck_id = max([truck['TruckID'] for truck in truck_list])
-    trucks_assigned_containers_list = [[] for _ in range(max_truck_id + 1)]
-
-    for truck in truck_list:
-        truck_id = truck['TruckID']
-        truck_assigned_list = sorted([int(c) for c in truck['AssignedContainers']])
-        trucks_assigned_containers_list[truck_id] = truck_assigned_list
-
-    return trucks_assigned_containers_list
-'''
-def process_instance(instance_id, containers_df, trucks_df, docks_df):
+def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=True):
     # --- Préparation des données ---
     truck_list = []
     dock_ids = docks_df['DockID'].tolist()
     num_docks = len(dock_ids)
-
+    
     # --- Attribution des quais aux camions (round robin) ---
     for i, row in trucks_df.iterrows():
         assigned_dock_id = dock_ids[i % num_docks]
@@ -95,16 +36,10 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
         })
 
     # --- Regrouper les conteneurs par destination (tri décroissant par longueur) ---
-    grouped_containers = {}
-    for dest_id, group in containers_df.groupby("Destination"):
-        grouped_containers[dest_id] = (
-            group.sort_values(by="Length", ascending=False)
-            .to_dict("records")
-        )
-
+    grouped_containers = group_containers_by_destination(containers_df)
     unassigned_containers = []
 
-    # --- Affectation des conteneurs ---
+    # --- Affectation des conteneurs --- 
     for dest_id, containers_in_dest in grouped_containers.items():
         for container in containers_in_dest:
             length = container["Length"]
@@ -121,31 +56,115 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
                 best_truck = min(feasible_trucks, key=lambda x: x["Capacity"])
                 best_truck["AssignedContainers"].append(c_id)
                 best_truck["Capacity"] -= length
-
+           
             else:
-                # 2️⃣ Sinon, chercher un camion VIDE (aucun conteneur encore affecté)
-                empty_trucks = [
-                    t for t in truck_list
-                    if len(t["AssignedContainers"]) == 0 and t["Capacity"] >= length
-                ]
+                unassigned_containers.append(c_id)
+                
+    # --- Build DataFrame of unassigned containers ---
+    if unassigned_containers:
+        unassigned_df = containers_df[containers_df["ContainerID"].isin(unassigned_containers)].copy()
+        print(f"⚠️ {len(unassigned_df)} unassigned containers found.")
+    else:
+        unassigned_df = pd.DataFrame(columns=containers_df.columns)
+        if verbose:
 
-                if empty_trucks:
-                    # On choisit le premier camion vide disponible
-                    empty_truck = empty_trucks[0]
-                    empty_truck["AssignedContainers"].append(c_id)
-                    empty_truck["Capacity"] -= length
-                    #print(f"⚠️ Conteneur {c_id} (dest {dest_id}) assigné à un camion VIDE (dest {empty_truck['Destination']})")
-
-                else:
-                    # 3️⃣ Aucun camion vide ou compatible disponible
-                    unassigned_containers.append(c_id)
+            print("✅ All containers were successfully assigned.")
 
     # --- Construire la sortie sous forme de liste ---
-    max_truck_id = max([truck['TruckID'] for truck in truck_list])
+    print(f"DEBUG: len(truck_list) = {len(truck_list)}")
+    print(f"DEBUG: len(trucks_df) = {len(trucks_df)}")
+    print(f"DEBUG: first rows of trucks_df:\n{trucks_df.head()}")
+
+    max_truck_id = int(max([truck['TruckID'] for truck in truck_list]))
     trucks_assigned_containers_list = [[] for _ in range(max_truck_id + 1)]
 
+    # --- Vérifier si la longueur totale des conteneurs <= somme des capacités des camions pour chaque destination ---
+    # --- Vérifier si la longueur totale des conteneurs <= somme des capacités des camions pour chaque destination ---
+    # --- Et si non, ajouter automatiquement des camions pour compenser la différence ---
+
+    grouped_trucks = {}
+    for dest_id, group in trucks_df.groupby("Destination"):
+        grouped_trucks[dest_id] = (
+            group.sort_values(by="Capacity", ascending=False)
+            .to_dict("records")
+        )
+    grouped_remaining_containers=group_containers_by_destination(unassigned_df)
+    new_trucks = []  # Pour stocker les nouveaux camions ajoutés
+    default_capacity = 6  # ✅ Capacité fixe de tous les camions
+
+    for dest_id in grouped_remaining_containers.keys():
+        total_container_length = sum(container["Length"] for container in grouped_remaining_containers[dest_id])
+        avg_capacity = default_capacity  # ✅ Tous les camions ont une capacité de 6
+        num_new_trucks = int(total_container_length // avg_capacity) + (1 if total_container_length % avg_capacity > 0 else 0)
+
+        
+    #check if trucks_df is empty
+        if trucks_df is None or trucks_df.empty:
+            print("⚠️ trucks_df vide — création impossible.")
+            return [], pd.DataFrame(columns=["Instance","TruckID","Destination","Cost","Capacity","DockPosition"])
+
+        if not truck_list:
+            print("⚠️ Aucun camion trouvé — trucks_df vide.")
+            return [], trucks_df
+        max_truck_id = int(max([truck['TruckID'] for truck in truck_list]))
+
+
+            # --- Trouver le prochain ID disponible ---
+        #max_truck_id = trucks_df["TruckID"].max() + 1
+
+        for i in range(num_new_trucks):
+                new_trucks.append({
+                    "TruckID": max_truck_id + i,
+                    "Capacity": avg_capacity,
+                    "Destination": dest_id,
+                    "Instance": instance_id,
+                    'Cost': 608,
+                    'Capacity':6,
+                    'DockPosition':7
+                })
+        for new_truck in new_trucks:
+                truck_list.append({
+                'TruckID': int(new_truck['TruckID']),
+                'Capacity': new_truck['Capacity'],
+                'InitialCapacity': new_truck['Capacity'],
+                'Destination': new_truck['Destination'],
+                'AssignedContainers': [],
+                'AssignedDockID': 2,
+                'AssignedDockPosition': new_truck.get('DockPosition', None),
+                'start_loading_time': 0,
+                'end_loading_time': 0
+        
+                                    })
+        for truck in truck_list:
+            truck_id = int(truck['TruckID'])
+            truck_assigned_list = sorted([int(c) for c in truck['AssignedContainers']])
+
+            # Si truck_id dépasse la taille actuelle, on agrandit la liste
+        if truck_id >= len(trucks_assigned_containers_list):
+            trucks_assigned_containers_list.extend([[] for _ in range(truck_id - len(trucks_assigned_containers_list) + 1)])
+
+        trucks_assigned_containers_list[truck_id] = truck_assigned_list
+        
+        #affecter les conteneurs aux nouveaux trucks
+        for dest_id_r, containers_in_dest_r in grouped_remaining_containers.items():
+            for container in containers_in_dest_r:
+                length = container["Length"]
+                c_id = container["ContainerID"]
+
+            # 1️⃣ Chercher un camion avec la même destination et assez de capacité
+                feasible_trucks_r = [
+                    t for t in truck_list
+                    if t["Destination"] == dest_id_r and t["Capacity"] >= length
+                ]
+
+                if feasible_trucks_r:
+                    # Choisir le camion avec la capacité la plus serrée (best fit)
+                    best_truck = min(feasible_trucks_r, key=lambda x: x["Capacity"])
+                    best_truck["AssignedContainers"].append(c_id)
+                    best_truck["Capacity"] -= length
+
     for truck in truck_list:
-        truck_id = truck['TruckID']
+        truck_id = int(truck['TruckID'])
         truck_assigned_list = sorted([int(c) for c in truck['AssignedContainers']])
         trucks_assigned_containers_list[truck_id] = truck_assigned_list
 
@@ -156,7 +175,18 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
     else:
         print(" Tous les conteneurs ont été assignés.")
     '''
-    return trucks_assigned_containers_list
+    
+
+    # Construire un DataFrame mis à jour avec les camions d’origine + les nouveaux
+    updated_trucks_df = pd.concat(
+        [trucks_df, pd.DataFrame(new_trucks)],
+        ignore_index=True ) if new_trucks else trucks_df.copy()
+    print(f"🚚 Nombre total de camions (après ajout éventuel) : {len(truck_list)}")
+    print(f"📦 Conteneurs non assignés restants : {len(unassigned_containers)} -> {unassigned_containers}")
+
+    return trucks_assigned_containers_list, updated_trucks_df
+
+
 
 
 def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df):

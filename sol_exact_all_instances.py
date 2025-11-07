@@ -6,9 +6,9 @@ import sys
 import time
 
 # === Charger les fichiers CSV générés ===
-containers_df = pd.read_csv("containers_all.csv")
-trucks_df = pd.read_csv("trucks_all.csv")
-docks_df = pd.read_csv("docks_all.csv")
+containers_df = pd.read_csv("instances_v2/containers_all_v2.csv")
+trucks_df = pd.read_csv("instances_v2/trucks_all_v2.csv")
+docks_df = pd.read_csv("instances_v2/docks_all_v2.csv")
 
 instances = sorted(containers_df["Instance"].unique())
 results = []
@@ -107,8 +107,8 @@ for instance_id in instances:
     m.addConstrs((quicksum(x[h, k] for k in K) == v_used[h] for h in H))
       
     #ajouter une limite pour les quai utilisé, max 2 camions sur le quai
-    m.addConstrs((quicksum(x[h, k] for h in H) <= 2 for k in K),
-             name="DockCapacityConstraint")
+    #m.addConstrs((quicksum(x[h, k] for h in H) <= 2 for k in K),
+             #name="DockCapacityConstraint")
     # (9) Contraintes d’ordre sur les quais
     m.addConstrs((x[h, k] + x[g, k] - 1 <= n[h, g] + n[g, h] for h in H for g in H if h != g for k in K))
     m.addConstrs((n[h, g] + n[g, h] <= 1 for h in H for g in H))
@@ -157,4 +157,4 @@ for instance_id in instances:
         })
 # === Sauvegarde des résultats ===
 df_results = pd.DataFrame(results)
-df_results.to_csv("results_exact_summary.csv", index=False)
+df_results.to_csv("results_exact_summary_with_instances_v2.csv", index=False)

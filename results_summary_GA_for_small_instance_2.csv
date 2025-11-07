@@ -1,2 +1,2 @@
-Instance,BestFitness,ExecutionTime(s),PopulationSize,Generations
-2,1306.0,0.277,10,20
+Instance,BestFitness,ExecutionTime(s),PopulationSize,Generations,best_chromosome
+2,748.5,0.15,10,20,"[[1], 0, 7, 0, [], 0, 4, 0, [2], 0, 2, 0, [], 0, 4, 0, [4], 0, 7, 0, [3], 0, 6, 0]"

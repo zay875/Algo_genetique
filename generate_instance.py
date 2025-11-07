@@ -23,6 +23,7 @@ def generate_instance(instance_id, D, N, H, K=7, Q=6, CE=0.5):
         "Value": [N, K, D, H, Q, CE, 10, 2, 5, 10000]
     })
 
+
     return df_containers, df_trucks, df_docks, params
 
 
@@ -42,6 +43,10 @@ for idx in range(1, num_instances + 1):
     all_trucks.append(t)
     all_docks.append(d)
     all_params.append(p)
+#verify the capacity and destination constraint for the containers and trucks
+#for each destination in the coantainers instance that there are enough trucks with enough capacity for that destination
+
+
 
 # ==== Save Outputs ====
 pd.concat(all_containers).to_csv("instances_v2/containers_all.csv", index=False)
