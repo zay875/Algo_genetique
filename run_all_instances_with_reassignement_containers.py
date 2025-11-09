@@ -9,9 +9,9 @@ from binpacking import calculate_loading_times_df
 import os
 # Charger les CSV (chemins relatifs)
 #utilisant les données génerer la deuxiéme fois avec les docks doublons corrigées
-containers_df = pd.read_csv("instances_v2/containers_all_v2.csv")
-trucks_df = pd.read_csv("instances_v2/trucks_all_v2.csv")
-docks_df = pd.read_csv("instances_v2/docks_all_v2.csv")
+containers_df = pd.read_csv("instances_v3/containers_all.csv")
+trucks_df = pd.read_csv("instances_v3/trucks_all.csv")
+docks_df = pd.read_csv("instances_v3/docks_all.csv")
 
 # Récupérer toutes les instances existantes
 instances = sorted(containers_df["Instance"].unique())
@@ -25,7 +25,7 @@ for instance_id in instances:
     docks_i_src  = docks_df[docks_df["Instance"] == instance_id].copy()
 
     # --- Génération population initiale (⚠️ NE PAS nommer le retour 'trucks_df') ---
-    population, updated_trucks_i = generate_initial_population(
+    population= generate_initial_population(
         pop_size=50,
         containers_df=cont_i_src,
         trucks_df=trucks_i_src,
@@ -33,19 +33,16 @@ for instance_id in instances:
         instance_id=instance_id,
         ratio_binpacking=0.2
     )
-
-    # Sécurité : si la fct renvoie un DF vide, garder l’original de secours
-    if updated_trucks_i is None or updated_trucks_i.empty:
-        print(f"⚠️ updated_trucks_i vide pour instance {instance_id} — on garde trucks_i_src")
-        trucks_i = trucks_i_src.copy()
-    else:
-        # Dans ton design actuel, generate_initial_population travaille déjà sur cette instance.
-        # Si jamais elle renvoyait plusieurs instances, on re-filtre par prudence :
-        trucks_i = updated_trucks_i[updated_trucks_i["Instance"] == instance_id].copy()
-
+    # Print initial population (first 5 individuals) to inspect reassignment/buffering
+    print(f"Initial population size: {len(population)}")
+    print("Initial population (first 5 chromosomes):")
+    for i, indiv in enumerate(population[:5], start=1):
+        print(f"  {i}: {indiv}")
+    
+    print(f"→ Après génération de la population pour l'instance {instance_id}")
     # Copies défensives pour le GA (évite toute mutation par référence)
     cont_i_ga  = cont_i_src.copy()
-    trucks_i_ga = trucks_i.copy()
+    trucks_i_ga = trucks_i_src.copy()
     docks_i_ga  = docks_i_src.copy()
 
     # --- Sanity checks avant GA ---
@@ -81,7 +78,13 @@ for instance_id in instances:
     # Loading times (utilise les DFs « sûrs »)
     Times_df = calculate_loading_times_df(best_chrom, trucks_df=trucks_i_ga, docks_df=docks_i_ga)
     os.makedirs("results_loading_times", exist_ok=True)
-    Times_df.to_excel(f"results_loading_times/instance_{instance_id}_times.xlsx", index=False)
+    # Try writing Excel; fall back to CSV if openpyxl is not installed
+    try:
+        Times_df.to_excel(f"results_loading_times/instance_{instance_id}_times.xlsx", index=False)
+    except ModuleNotFoundError as e:
+        # Most common missing dependency is openpyxl
+        print("openpyxl not available, saving loading times as CSV instead.")
+        Times_df.to_csv(f"results_loading_times/instance_{instance_id}_times.csv", index=False)
 
     exec_time = time.time() - start_time
     print(f"⏱ Temps : {exec_time:.2f}s | Fitness = {final_fitness}")

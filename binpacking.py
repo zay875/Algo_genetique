@@ -71,19 +71,20 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
             print("✅ All containers were successfully assigned.")
 
     # --- Construire la sortie sous forme de liste ---
+    # We'll build a dense list indexed by truck order (1..n) rather than relying on numeric TruckID values
     print(f"DEBUG: len(truck_list) = {len(truck_list)}")
     print(f"DEBUG: len(trucks_df) = {len(trucks_df)}")
     print(f"DEBUG: first rows of trucks_df:\n{trucks_df.head()}")
 
-    max_truck_id = int(max([truck['TruckID'] for truck in truck_list]))
-    trucks_assigned_containers_list = [[] for _ in range(max_truck_id + 1)]
+    trucks_assigned_containers_list = [[] for _ in range(len(truck_list) + 1)]  # index 0 unused
 
     # --- Vérifier si la longueur totale des conteneurs <= somme des capacités des camions pour chaque destination ---
     # --- Vérifier si la longueur totale des conteneurs <= somme des capacités des camions pour chaque destination ---
     # --- Et si non, ajouter automatiquement des camions pour compenser la différence ---
 
-    grouped_trucks = {}
-    for dest_id, group in trucks_df.groupby("Destination"):
+    #grouped_trucks = {}
+    '''
+      for dest_id, group in trucks_df.groupby("Destination"):
         grouped_trucks[dest_id] = (
             group.sort_values(by="Capacity", ascending=False)
             .to_dict("records")
@@ -162,11 +163,27 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
                     best_truck = min(feasible_trucks_r, key=lambda x: x["Capacity"])
                     best_truck["AssignedContainers"].append(c_id)
                     best_truck["Capacity"] -= length
+                    # Construire un DataFrame mis à jour avec les camions d’origine + les nouveaux
+    updated_trucks_df = pd.concat(
+        [trucks_df, pd.DataFrame(new_trucks)],
+        ignore_index=True ) if new_trucks else trucks_df.copy()
+    print(f"🚚 Nombre total de camions (après ajout éventuel) : {len(truck_list)}")
+    print(f"📦 Conteneurs non assignés restants : {len(unassigned_containers)} -> {unassigned_containers}")
 
-    for truck in truck_list:
-        truck_id = int(truck['TruckID'])
-        truck_assigned_list = sorted([int(c) for c in truck['AssignedContainers']])
-        trucks_assigned_containers_list[truck_id] = truck_assigned_list
+
+    '''
+  
+    # Assign by truck order (enumeration) to guarantee alignment with trucks_df order used elsewhere
+    for idx, truck in enumerate(truck_list, start=1):
+        truck_assigned_list = []
+        for c in truck['AssignedContainers']:
+            try:
+                truck_assigned_list.append(int(c))
+            except Exception:
+                # keep original value if it cannot be converted to int
+                truck_assigned_list.append(c)
+        truck_assigned_list = sorted(truck_assigned_list, key=lambda x: int(x) if isinstance(x, (int, float)) or (isinstance(x, str) and x.isdigit()) else str(x))
+        trucks_assigned_containers_list[idx] = truck_assigned_list
 
     # --- Affichage des conteneurs non assignés ---
     '''
@@ -177,14 +194,8 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     '''
     
 
-    # Construire un DataFrame mis à jour avec les camions d’origine + les nouveaux
-    updated_trucks_df = pd.concat(
-        [trucks_df, pd.DataFrame(new_trucks)],
-        ignore_index=True ) if new_trucks else trucks_df.copy()
-    print(f"🚚 Nombre total de camions (après ajout éventuel) : {len(truck_list)}")
-    print(f"📦 Conteneurs non assignés restants : {len(unassigned_containers)} -> {unassigned_containers}")
-
-    return trucks_assigned_containers_list, updated_trucks_df
+    
+    return trucks_assigned_containers_list
 
 
 

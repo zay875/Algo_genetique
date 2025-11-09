@@ -1,0 +1,14 @@
+TruckID,AssignedDockPosition,start_loading_time,end_loading_time
+3,1,5,5
+9,1,10,10
+2,2,5,5
+7,2,10,10
+T_extra_4_8325,2,15,15
+5,3,5,5
+6,3,10,10
+T_new_4,4,5,5
+1,5,5,6
+8,5,11,12
+T_extra_3_9343,5,17,17
+10,6,5,5
+4,6,10,10

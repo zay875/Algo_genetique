@@ -15,9 +15,11 @@ def generate_trucks(instance_id, D, H, df_docks, Q=6):
         dest = random.randint(1, D)
         chosen_dock = df_docks.sample(1).iloc[0]
         dock_pos = chosen_dock["Position"] #attention look for the dock is it the dock position we affect to trucks or the dockID
+        added=False
         #capacity = random.randint(5, 12)
-        trucks.append([instance_id, h, dest, CTd[dest], Q, dock_pos])
+        trucks.append([instance_id, h, dest, CTd[dest], Q, dock_pos,added])
+    #add a column name to distinguish the old and added trucks
 
-    df = pd.DataFrame(trucks, columns=["Instance", "TruckID", "Destination", "Cost", "Capacity", "DockPosition"])
+    df = pd.DataFrame(trucks, columns=["Instance", "TruckID", "Destination", "Cost", "Capacity", "DockPosition","added"])
     return df
 
