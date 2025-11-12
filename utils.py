@@ -72,17 +72,18 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
     Vérifie si une solution (chromosome) est faisable.
     Retourne un dictionnaire contenant les erreurs et un booléen de faisabilité.
     """
+   
     df_containers = containers_df[containers_df["Instance"] == instance_id].copy()
     df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()
-    instance_docks_df = trucks_df[trucks_df["Instance"] == instance_id].copy()
     errors = []
     all_assigned_containers = []
-    truck_ids = instance_docks_df['TruckID'].tolist()
+   
     # ...existing code...
-    truck_ids = instance_docks_df['TruckID'].tolist()
+    df_trucks = df_trucks.sort_values("TruckID").reset_index(drop=True)
+    truck_ids = df_trucks['TruckID'].tolist()
     num_trucks = len(truck_ids)
     num_blocks = len(chromosome) // 4
-
+     
     for i in range(num_blocks):
         if i >= num_trucks:
             errors.append(f"⚠️ Bloc chromosome {i} sans camion correspondant (instance {instance_id})")
@@ -107,7 +108,7 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
             cont_info = cont_rows.iloc[0]
             total_length += cont_info["Length"]
 
-
+            #La destination du camion doit correspondre à celle du conteneur qui lui est assigné.
             if cont_info["Destination"] != truck_destination:
                 errors.append(
                     f"❌ Conteneur {c_id} (dest {cont_info['Destination']}) "
@@ -122,6 +123,7 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
         
         all_assigned_containers.extend(containers_assigned)
     # 3️⃣ Check unassigned containers
+    #tout les contenerus doivent etre assigné 
     all_containers = df_containers["ContainerID"].tolist()
     unassigned = [c for c in all_containers if c not in all_assigned_containers]
     if unassigned:
@@ -130,6 +132,7 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
 # ...existing code...
 
     # 2️⃣ Vérifier les conteneurs dupliqués
+    #chaque conteneur doit être assigné à un seul camion.
     duplicates = [c for c in set(all_assigned_containers) if all_assigned_containers.count(c) > 1]
     if duplicates:
         errors.append(f"⚠️ Conteneurs assignés plusieurs fois : {duplicates}")

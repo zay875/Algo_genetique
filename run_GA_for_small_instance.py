@@ -5,6 +5,7 @@ from population import generate_initial_population
 from fitness import FitnessEvaluator
 from ga_runner import run_ga
 from utils import print_chromosome_assignments
+from utils import verify_solution_feasibility
 #from binpacking import ensure_capacity
 #from binpacking import group_containers_by_destination
 
@@ -16,27 +17,32 @@ docks_df = pd.read_csv("docks_all.csv")
 '''
 # Récupérer toutes les instances existantes
 #instances = sorted(containers_df["Instance"].unique())
+
 data_container = {
-    'ContainerID': [1, 2, 3,4],
-    'Length': [2, 5, 3 ,5],
-    'Position': [38, 17, 48,28],
-    'Destination' : [1,2,2,2],
-    'Instance': [2,2 ,2,2]
+    'ContainerID': [1, 2, 3, 4, 5, 6],
+    'Length': [4, 3, 5, 4, 2, 3],
+    'Position': [10, 12, 15, 18, 20, 22],
+    'Destination': [1, 1, 2, 2, 3, 3],
+    'Instance': [1, 1, 1, 1, 1, 1]
 }
 
 data_truck = {
-    'TruckID': [1, 2,3,4],
-    'Destination': [1,1,2,3],
-    'Cost': [608 ,608,705,504],
-    'Capacity':[6,6,6,6],
-    'DockPosition':[4,6,6,2],
-    'Instance': [2,2,2,2]
+    'TruckID': [1, 2, 3, 4, 5, 6],
+    'Destination': [1, 2, 3, 1, 2, 3],
+    'Cost': [600, 620, 640, 605, 625, 645],
+    'Capacity': [8, 8, 8, 8, 8, 8],
+    'DockPosition': [3, 4, 5, 3, 4, 5],
+    'Instance': [1, 1, 1, 1, 1, 1]
 }
-data_docks={ 
-'DockID':[1,2,3,4],
-'Position':[4,7,6,2],'Instance': [2,2,2,2]
+
+data_docks = {
+    'DockID': [1, 2, 3],
+    'Position': [3, 4, 5],
+    'Instance': [1, 1, 1]
 }
-instance_id = 2
+
+instance_id = 1
+num_generations= 5
 containers_df = pd.DataFrame(data_container)
 trucks_df = pd.DataFrame(data_truck)
 docks_df = pd.DataFrame(data_docks)
@@ -52,12 +58,17 @@ population = generate_initial_population(
     trucks_df=trucks_df,
     docks_df=docks_df,
     instance_id=instance_id,
-    ratio_binpacking=0.2
+    ratio_binpacking=1.0
 )
 print("→ Après génération de la population")
-
+print(f"the result of generating the population{population}")
 print("hi")
 print(f"Population initiale : {len(population)} individus")
+
+for chrom in population:
+    #vrify the solutions chek each chromosome if it rspects the constraints in verify feasibility
+    fesable, erreurs= verify_solution_feasibility(chrom, trucks_df, containers_df,instance_id)
+print(f"The feasibility results{fesable, erreurs}")
 if not population:
     raise ValueError("❌ Population vide — vérifie process_instance ou generate_random_chromosome.")
 
@@ -66,15 +77,24 @@ fitness_eval = FitnessEvaluator(containers_df, trucks_df, C_E=0.5, W1=0.5, W2=0.
 
 # Exécution du GA
 start_time = time.time()
-best_chrom, best_fit,history = run_ga(
+best_chrom, best_fit,history,new_population= run_ga(
     population,
     fitness_eval,
     containers_df,
     trucks_df,
     instance_id,
     len(docks_df),
-    num_generations=20
+    num_generations=5
 )  
+print(f"the result of crossover and mutation{new_population}")
+
+
+for gen in range(num_generations):
+    for chrom in new_population:
+        #vrify the solutions chek each chromosome if it rspects the constraints in verify feasibility
+        fesable, erreurs= verify_solution_feasibility(chrom, trucks_df, containers_df,instance_id)
+print(f"The feasibility results{fesable, erreurs}")
+
 print("hello") 
 #penalty_value, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df, containers_df, instance_id)
 cost = fitness_eval.calculate_truck_cost_f1(best_chrom)

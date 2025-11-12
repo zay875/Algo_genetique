@@ -33,6 +33,32 @@ def truck_aligned_crossover(parent1, parent2):
 
     return child1, child2
 
+import random
+
+def multipoint_crossover(parent1, parent2, num_points=3):
+    """
+    Crossover à plusieurs points, mais respectant les blocs de 4 gènes.
+    Chaque bloc correspond à un camion.
+    """
+    block_size = 4
+    num_blocks = len(parent1) // block_size
+    crossover_points = sorted(random.sample(range(1, num_blocks), num_points))
+
+    child1, child2 = [], []
+    start = 0
+    swap = False
+
+    for point in crossover_points + [num_blocks]:
+        if not swap:
+            child1.extend(parent1[start*block_size : point*block_size])
+            child2.extend(parent2[start*block_size : point*block_size])
+        else:
+            child1.extend(parent2[start*block_size : point*block_size])
+            child2.extend(parent1[start*block_size : point*block_size])
+        swap = not swap
+        start = point
+
+    return child1, child2
 
 # --- MUTATION ---
 def mutate(chromosome, num_docks, mutation_rate=0.2):
@@ -56,7 +82,7 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
 # --- MAIN GA LOOP ---
 
 def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, instance_id,
-           num_docks, num_generations=10, num_elites=1, crossover_rate=0.9, mutation_rate=0.03):
+           num_docks, num_generations=10, num_elites=1, crossover_rate=0.9, mutation_rate=0.03,num_points=5):
 
     """
     Exécute l’algorithme génétique avec suivi du meilleur global.
@@ -78,8 +104,11 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
 
         for chrom in population:
             key = str(chrom)
+            #appelle verify feasibility
             if key not in fitness_cache:
                 fitness_cache[key] = fitness_evaluator.calculate_fitness(chrom, instance_id, include_penalty=True)
+            
+
 
             fitness_values.append(fitness_cache[key])
 
@@ -87,19 +116,38 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         elites = elitism_selection(population, fitness_values, num_elites)
 
         # 3. Générer enfants
+        max_attempts = 5  # pour éviter une boucle infinie
         offspring = []
         while len(offspring) < len(population) - num_elites:
             parent1 = tournament_selection(population, fitness_values)
             parent2 = tournament_selection(population, fitness_values)
+            valid_children=[]
+            for _ in range(max_attempts):
 
-            if random.random() < crossover_rate:
-                child1, child2 = truck_aligned_crossover(parent1, parent2)
-            else:
-                child1, child2 = copy.deepcopy(parent1), copy.deepcopy(parent2)
+                if random.random() < crossover_rate:
+                    child1, child2 = multipoint_crossover(parent1, parent2,num_points)
+                else:
+                    child1, child2 = copy.deepcopy(parent1), copy.deepcopy(parent2)
+                child1=mutate(child1, num_docks, mutation_rate)
+                child2=(mutate(child2, num_docks, mutation_rate))
 
-            offspring.append(mutate(child1, num_docks, mutation_rate))
-            if len(offspring) < len(population) - num_elites:
-                offspring.append(mutate(child2, num_docks, mutation_rate))
+                 # Vérification de faisabilité
+                feasible1, errors1 = verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
+                feasible2, errors2 = verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
+
+                if feasible1:
+                    valid_children.append(child1)
+                if feasible2:
+                    valid_children.append(child2)
+
+        # Si on a trouvé des enfants valides, on sort de la boucle
+                if len(valid_children) >= 2:
+                    break
+            # Si après toutes les tentatives, aucun enfant valide → on garde les parents (fallback)
+            if not valid_children:
+                valid_children = [copy.deepcopy(parent1), copy.deepcopy(parent2)]
+
+            offspring.extend(valid_children[:len(population) - len(elites) - len(offspring)])
 
         # 4. Nouvelle population
         population = elites + offspring
@@ -171,4 +219,4 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
     plt.pause(50)
     plt.close()
     '''
-    return global_best_chromosome, global_best_fitness,best_fitness_history
+    return global_best_chromosome, global_best_fitness,best_fitness_history, population

@@ -174,6 +174,8 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     '''
   
     # Assign by truck order (enumeration) to guarantee alignment with trucks_df order used elsewhere
+    '''
+    '''
     for idx, truck in enumerate(truck_list, start=1):
         truck_assigned_list = []
         for c in truck['AssignedContainers']:
@@ -200,14 +202,25 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
 
 
 
-def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df):
+def binpacking_to_chromosome(trucks_assigned_containers_list,trucks_df,docks_df):
     chromosome = []
     dock_positions = docks_df['Position'].tolist()
-    for truck_id, assigned in enumerate(trucks_assigned_containers_list):
-        if truck_id == 0:
-            continue
-        dock_position = dock_positions[truck_id % len(dock_positions)]
+  # On parcourt les camions dans l'ordre du DataFrame pour garder la cohérence
+    for _, truck in trucks_df.iterrows():
+        truck_id = int(truck["TruckID"])
+        assigned = []
+
+        # Vérifier si le TruckID existe dans la liste (pour éviter les index out of range)
+        if truck_id < len(trucks_assigned_containers_list):
+            assigned = trucks_assigned_containers_list[truck_id]
+        else:
+            assigned = []
+
+        dock_position = truck.get("DockPosition", dock_positions[truck_id % len(dock_positions)])
+
+        
         chromosome.extend([assigned, 0, dock_position, 0])
+
     return chromosome
 # --- Functions from binpacking.ipynb ---
 def calculate_loading_times_df(chromosome, trucks_df, docks_df):
