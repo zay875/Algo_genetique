@@ -41,6 +41,7 @@ docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 def generate_random_chromosome(trucks_df, docks_df, containers_df):
     chromosome = []
     dock_positions = docks_df['Position'].tolist()
+    
     containers = containers_df[['ContainerID','Length']].to_dict("records")
     random.shuffle(containers)
 

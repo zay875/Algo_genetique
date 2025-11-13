@@ -50,7 +50,7 @@ def multipoint_crossover(parent1, parent2, num_points=3):
 
     for point in crossover_points + [num_blocks]:
         if not swap:
-            child1.extend(parent1[start*block_size : point*block_size])
+            child1.extend(parent1[start*block_size : point*block_size]) 
             child2.extend(parent2[start*block_size : point*block_size])
         else:
             child1.extend(parent2[start*block_size : point*block_size])
@@ -78,6 +78,119 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
                 containers[idx1], containers[idx2] = containers[idx2], containers[idx1]
                 chromosome[i] = containers
     return chromosome
+
+
+
+
+#------------Correction des chromosomes-----------
+
+
+def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
+        
+    # Préparation
+    df_containers = containers_df[containers_df["Instance"] == instance_id].copy()
+    df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()
+    df_trucks = df_trucks.sort_values("TruckID").reset_index(drop=True)
+
+    truck_ids = df_trucks["TruckID"].tolist()
+    num_trucks = len(truck_ids)
+    num_blocks = len(chrom) // 4
+
+    unassigned = []
+    wrong_assignment = []
+    duplicates = []
+    capacity_errors = []
+    for e in errors:
+
+        if "assigné à camion" in e:
+            # Exemple: ❌ Conteneur 7 (dest 1) assigné à camion 5 (dest 2)
+            parts = e.split()
+            cid = int(parts[2])
+            wrong_assignment.append(cid)
+
+        if "non assignés" in e:
+            # Exemple: ⚠️ Conteneurs non assignés : [3]
+            ids = eval(e.split(":")[1].strip())
+            unassigned.extend(ids)
+
+        if "assignés plusieurs fois" in e:
+            ids = eval(e.split(":")[1].strip())
+            duplicates.extend(ids)
+
+        if "dépasse la capacité" in e:
+            # Exemple: ⚠️ Camion 3 dépasse la capacité (14/6)
+            tid = int(e.split()[2])
+            capacity_errors.append(tid)
+
+        if "n'existe pas" in e:
+            cid = int(e.split()[1])
+            wrong_assignment.append(cid)
+
+        if "sans camion correspondant" in e:
+            # Exemple: Bloc chromosome 10 sans camion correspondant
+            block_idx = int(e.split()[3])
+            # On vide ce block
+            chrom[block_idx*4] = []
+    #enlever les conteneurs duppliqué
+ 
+    for cid in duplicates:
+        for i in range(num_blocks):
+            block_containers = chrom[i*4]
+            if cid in block_containers:
+                block_containers.remove(cid)
+                
+    
+    # enlever les conteneurs assigné au mauvais camion
+    removed = set()
+
+    for cid in wrong_assignment:
+        for i in range(num_blocks):
+            block_containers = chrom[i*4]
+            if cid in block_containers:
+                block_containers.remove(cid)
+                removed.add(cid)
+    
+
+        
+    #assigner les contenerus enlevé et non assigné
+
+    to_assign = list(set(unassigned) | removed)
+
+    for cid in to_assign:
+        cont_dest = df_containers.loc[df_containers["ContainerID"] == cid, "Destination"].iloc[0]
+        cont_len  = df_containers.loc[df_containers["ContainerID"] == cid, "Length"].iloc[0]
+        assigned= False
+        # Chercher camion compatible
+        for i in range(num_trucks):
+            tid = truck_ids[i]
+            if df_trucks.loc[df_trucks["TruckID"] == tid, "Destination"].iloc[0] != cont_dest:
+                continue
+
+            block_containers = chrom[i*4]
+            current_len = sum(df_containers[df_containers["ContainerID"] == c]["Length"].iloc[0]
+                              for c in block_containers)
+
+            truck_cap = df_trucks.loc[df_trucks["TruckID"] == tid, "Capacity"].iloc[0]
+
+            if current_len + cont_len <= truck_cap:
+                block_containers.append(cid)
+                assigned = True
+                break
+        #chercher un camion vide 
+        if not assigned:
+            for i in range(num_trucks):
+                block = chrom[i*4]
+                if len(block) == 0:      # 
+                #Modifier la destination du camion dans trucks_df
+                    tid = truck_ids[i]
+                    trucks_df.loc[trucks_df["TruckID"] == tid, "Destination"] = cont_dest
+                    block.append(cid)
+                    assigned = True
+                    break
+
+    return chrom        
+
+    #corriger le conteneurs enlevé et non assingeé
 
 # --- MAIN GA LOOP ---
 
@@ -137,16 +250,24 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
 
                 if feasible1:
                     valid_children.append(child1)
+                else:
+                    #corriger le chromosome
+                    child1 = correct_chrom(errors1, child1, trucks_df, containers_df, instance_id)
+                    
+                    valid_children.append(child1)
                 if feasible2:
+                    valid_children.append(child2)
+                else:
+                    child2 = correct_chrom(errors2, child2, trucks_df, containers_df, instance_id)
                     valid_children.append(child2)
 
         # Si on a trouvé des enfants valides, on sort de la boucle
                 if len(valid_children) >= 2:
                     break
             # Si après toutes les tentatives, aucun enfant valide → on garde les parents (fallback)
-            if not valid_children:
+            '''if not valid_children:
                 valid_children = [copy.deepcopy(parent1), copy.deepcopy(parent2)]
-
+            '''
             offspring.extend(valid_children[:len(population) - len(elites) - len(offspring)])
 
         # 4. Nouvelle population

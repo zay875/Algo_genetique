@@ -15,14 +15,14 @@ def group_containers_by_destination(containers_df):
 def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=True):
     # --- Préparation des données ---
     truck_list = []
-    dock_ids = docks_df['DockID'].tolist()
+    dock_ids = docks_df['Position'].tolist()
     num_docks = len(dock_ids)
     
     # --- Attribution des quais aux camions (round robin) ---
     for i, row in trucks_df.iterrows():
         assigned_dock_id = dock_ids[i % num_docks]
         assigned_dock_position = docks_df[docks_df['DockID'] == assigned_dock_id]['Position'].iloc[0]
-
+        assigned_dock_position = int(assigned_dock_position)
         truck_list.append({
             'TruckID': row['TruckID'],
             'Capacity': row['Capacity'],
@@ -76,8 +76,16 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     print(f"DEBUG: len(trucks_df) = {len(trucks_df)}")
     print(f"DEBUG: first rows of trucks_df:\n{trucks_df.head()}")
 
-    trucks_assigned_containers_list = [[] for _ in range(len(truck_list) + 1)]  # index 0 unused
 
+    # --- Construire la sortie sous forme de liste ---
+    max_truck_id = max([truck['TruckID'] for truck in truck_list])
+   
+    trucks_assigned_containers_list = [[] for _ in range(max_truck_id + 1)]
+
+    for truck in truck_list:
+        truck_id = truck['TruckID']
+        truck_assigned_list = sorted([int(c) for c in truck['AssignedContainers']])
+        trucks_assigned_containers_list[truck_id] = truck_assigned_list
     # --- Vérifier si la longueur totale des conteneurs <= somme des capacités des camions pour chaque destination ---
     # --- Vérifier si la longueur totale des conteneurs <= somme des capacités des camions pour chaque destination ---
     # --- Et si non, ajouter automatiquement des camions pour compenser la différence ---
@@ -175,7 +183,7 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
   
     # Assign by truck order (enumeration) to guarantee alignment with trucks_df order used elsewhere
     '''
-    '''
+
     for idx, truck in enumerate(truck_list, start=1):
         truck_assigned_list = []
         for c in truck['AssignedContainers']:
@@ -186,7 +194,7 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
                 truck_assigned_list.append(c)
         truck_assigned_list = sorted(truck_assigned_list, key=lambda x: int(x) if isinstance(x, (int, float)) or (isinstance(x, str) and x.isdigit()) else str(x))
         trucks_assigned_containers_list[idx] = truck_assigned_list
-
+    '''
     # --- Affichage des conteneurs non assignés ---
     '''
     if unassigned_containers:
