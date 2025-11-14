@@ -123,7 +123,7 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
             capacity_errors.append(tid)
 
         if "n'existe pas" in e:
-            cid = int(e.split()[1])
+            cid = int(e.split()[2])
             wrong_assignment.append(cid)
 
         if "sans camion correspondant" in e:
@@ -154,9 +154,20 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
         
     #assigner les contenerus enlevé et non assigné
 
-    to_assign = list(set(unassigned) | removed)
+    valid_ids = set(df_containers["ContainerID"].tolist())
+
+    # On garde les IDs pour debug / logs
+    all_removed = list(removed)  
+    all_unassigned = list(unassigned)
+
+    # Mais on ne réassigne que les conteneurs valables
+    removed = [cid for cid in removed if cid in valid_ids]
+    unassigned = [cid for cid in unassigned if cid in valid_ids]
+
+    to_assign = list(set(unassigned) | set(removed))
 
     for cid in to_assign:
+        
         cont_dest = df_containers.loc[df_containers["ContainerID"] == cid, "Destination"].iloc[0]
         cont_len  = df_containers.loc[df_containers["ContainerID"] == cid, "Length"].iloc[0]
         assigned= False
@@ -195,7 +206,7 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
 # --- MAIN GA LOOP ---
 
 def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, instance_id,
-           num_docks, num_generations=10, num_elites=1, crossover_rate=0.9, mutation_rate=0.03,num_points=5):
+           num_docks, num_generations=10, num_elites=1, crossover_rate=0.9, mutation_rate=0.03,num_points=3):
 
     """
     Exécute l’algorithme génétique avec suivi du meilleur global.

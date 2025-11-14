@@ -38,15 +38,19 @@ trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
 docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 #truck_cost_df = pd.read_csv("truck_cost.csv")
 '''
-def generate_random_chromosome(trucks_df, docks_df, containers_df):
+def generate_random_chromosome(trucks_df, docks_df, containers_df, instance_id):
     chromosome = []
-    dock_positions = docks_df['Position'].tolist()
+    df_cont  = containers_df[containers_df["Instance"] == instance_id].copy()
+    df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()
+    df_docks = docks_df[docks_df["Instance"] == instance_id].copy()
+
+    dock_positions = df_docks['Position'].tolist()
     
-    containers = containers_df[['ContainerID','Length']].to_dict("records")
+    containers = df_cont[['ContainerID','Length']].to_dict("records")
     random.shuffle(containers)
 
-    truck_ids = trucks_df['TruckID'].tolist()
-    capacities = dict(zip(truck_ids, trucks_df['Capacity']))
+    truck_ids = df_trucks['TruckID'].tolist()
+    capacities = dict(zip(truck_ids, df_trucks['Capacity']))
     assignments = {t: [] for t in truck_ids}
 
     for c in containers:
