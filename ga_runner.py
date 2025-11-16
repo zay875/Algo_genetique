@@ -78,8 +78,44 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
                 containers[idx1], containers[idx2] = containers[idx2], containers[idx1]
                 chromosome[i] = containers
     return chromosome
+#diploid crossover inspired by the paper "A Diploid Evolutionary Algorithm for Sustainable Truck Scheduling at a Cross-Docking Facility by Maxim A. Dulebenets"
+def diploid_crossover(parent1, parent2):
+    """
+    Diploid crossover: combine two parents to create two children,
+    each child inherits genes from both parents.
+    """
+    # Block-wise two-point crossover (operates on blocks of 4 genes = one truck)
+    block_size = 4
+    num_blocks = len(parent1) // block_size
 
+    # safety: if parents are too short or identical blocks, fallback to copying
+    if num_blocks < 2:
+        return copy.deepcopy(parent1), copy.deepcopy(parent2)
 
+    # choose two crossover points (block indices) with 0 <= start < end <= num_blocks
+    start, end = sorted(random.sample(range(1, num_blocks), 2))
+
+    # split parents into block lists
+    blocks1 = [parent1[i*block_size:(i+1)*block_size] for i in range(num_blocks)]
+    blocks2 = [parent2[i*block_size:(i+1)*block_size] for i in range(num_blocks)]
+
+    child_blocks1 = []
+    child_blocks2 = []
+    for i in range(num_blocks):
+        if start <= i < end:
+            # inherit middle segment from respective parents
+            child_blocks1.append(copy.deepcopy(blocks1[i]))
+            child_blocks2.append(copy.deepcopy(blocks2[i]))
+        else:
+            # inherit outer segments from the opposite parent
+            child_blocks1.append(copy.deepcopy(blocks2[i]))
+            child_blocks2.append(copy.deepcopy(blocks1[i]))
+
+    # flatten blocks back to chromosomes
+    child1 = [gene for block in child_blocks1 for gene in block]
+    child2 = [gene for block in child_blocks2 for gene in block]
+
+    return child1, child2
 
 
 #------------Correction des chromosomes-----------
@@ -249,7 +285,7 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
             for _ in range(max_attempts):
 
                 if random.random() < crossover_rate:
-                    child1, child2 = multipoint_crossover(parent1, parent2,num_points)
+                    child1, child2 = diploid_crossover(parent1, parent2)
                 else:
                     child1, child2 = copy.deepcopy(parent1), copy.deepcopy(parent2)
                 child1=mutate(child1, num_docks, mutation_rate)
