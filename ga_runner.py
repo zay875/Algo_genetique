@@ -79,6 +79,50 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
                 chromosome[i] = containers
     return chromosome
 #diploid crossover inspired by the paper "A Diploid Evolutionary Algorithm for Sustainable Truck Scheduling at a Cross-Docking Facility by Maxim A. Dulebenets"
+'''
+
+def diploid_crossover(parent1, parent2):
+    """
+    Diploid crossover: combine two parents to create two children,
+    each child inherits genes from both parents.
+    """
+    # Block-wise two-point crossover (operates on blocks of 4 genes = one truck)
+    block_size = 4
+    num_blocks = len(parent1) // block_size
+
+    # safety: if parents are too short or identical blocks, fallback to copying
+    if num_blocks < 2:
+        return copy.deepcopy(parent1), copy.deepcopy(parent2)
+
+    # choose two crossover points (block indices) with 0 <= start < end <= num_blocks
+    start, end = sorted(random.sample(range(1, num_blocks), 2))
+
+    # split parents into block lists
+    blocks1 = [parent1[i*block_size:(i+1)*block_size] for i in range(num_blocks)]
+    blocks2 = [parent2[i*block_size:(i+1)*block_size] for i in range(num_blocks)]
+
+    child_blocks1 = []
+    child_blocks2 = []
+    for i in range(num_blocks):
+        if start <= i < end:
+            # inherit middle segment from respective parents
+            child_blocks1.append(copy.deepcopy(blocks1[i]))
+            child_blocks2.append(copy.deepcopy(blocks2[i]))
+        
+            # inherit outer segments from the opposite parent if the element is not already in the child block
+            # Source - https://stackoverflow.com/a
+            # Posted by aaronasterling, modified by community. See post 'Timeline' for change history
+            # Retrieved 2025-11-17, License - CC BY-SA 4.0
+        for elm1 in [item for item in blocks2 if item not in child_blocks1]:
+            child_blocks1.insert(i,copy.deepcopy(elm1))
+        for elm2 in [item for item in blocks1 if item not in child_blocks2]:
+            child_blocks2.insert(i,copy.deepcopy(elm2))
+    # flatten blocks back to chromosomes
+    child1 = [gene for block in child_blocks1 for gene in block]
+    child2 = [gene for block in child_blocks2 for gene in block]
+
+    return child1, child2
+'''
 def diploid_crossover(parent1, parent2):
     """
     Diploid crossover: combine two parents to create two children,
@@ -115,6 +159,64 @@ def diploid_crossover(parent1, parent2):
     child1 = [gene for block in child_blocks1 for gene in block]
     child2 = [gene for block in child_blocks2 for gene in block]
 
+    return child1, child2
+
+
+def make_hashable_block(block):
+    # Convert block to a fully hashable tuple
+    return (tuple(block[0]), block[1], block[2], block[3])
+
+
+def pmx_block(parent1, parent2):
+    block_size = 4
+    num_blocks = len(parent1) // block_size
+
+    # Convert parents to list-of-blocks
+    p1 = [parent1[i*block_size:(i+1)*block_size] for i in range(num_blocks)]
+    p2 = [parent2[i*block_size:(i+1)*block_size] for i in range(num_blocks)]
+
+    # Choose PMX slice
+    start, end = sorted(random.sample(range(num_blocks), 2))
+
+    # Prepare empty child
+    child = [None] * num_blocks
+
+    # Copy segment from p1
+    child[start:end] = copy.deepcopy(p1[start:end])
+
+    # Mapping for conflict resolution
+    mapping = {}
+    for i in range(start, end):
+        b1 = make_hashable_block(p1[i])
+        b2 = make_hashable_block(p2[i])
+        mapping[b2] = b1
+        mapping[b1] = b2
+
+    # Fill remaining blocks
+    for i in range(num_blocks):
+        if child[i] is not None:
+            continue
+
+        candidate = p2[i]
+
+        # Resolve conflicts using mapping
+        while True:
+            h = make_hashable_block(candidate)
+            if h in mapping and list(mapping[h]) in child:
+                candidate = list(mapping[h])
+            else:
+                break
+
+        child[i] = copy.deepcopy(candidate)
+
+    # Flatten the child
+    flat_child = [gene for block in child for gene in block]
+    return flat_child
+
+
+def PMX_crossover(parent1, parent2):
+    child1 = pmx_block(parent1, parent2)
+    child2 = pmx_block(parent2, parent1)
     return child1, child2
 
 
@@ -285,16 +387,17 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
             for _ in range(max_attempts):
 
                 if random.random() < crossover_rate:
-                    child1, child2 = diploid_crossover(parent1, parent2)
+                    child1, child2 = PMX_crossover(parent1, parent2)
                 else:
                     child1, child2 = copy.deepcopy(parent1), copy.deepcopy(parent2)
                 child1=mutate(child1, num_docks, mutation_rate)
-                child2=(mutate(child2, num_docks, mutation_rate))
+                child2=mutate(child2, num_docks, mutation_rate)
 
                  # Vérification de faisabilité
                 feasible1, errors1 = verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
+                print(f"errors after ga operations for child 1{errors1}")
                 feasible2, errors2 = verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
-
+                print(f"errors after ga operations for child 2{errors2}")
                 if feasible1:
                     valid_children.append(child1)
                 else:

@@ -82,7 +82,7 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     # We'll build a dense list indexed by truck order (1..n) rather than relying on numeric TruckID values
     print(f"DEBUG: len(truck_list) = {len(truck_list)}")
     print(f"DEBUG: len(trucks_df) = {len(trucks_df)}")
-    print(f"DEBUG: first rows of trucks_df:\n{trucks_df.head()}")
+
 
     # --- Construire la sortie sous forme de liste ---
 # --- Construire la sortie sous forme de liste compactée ---

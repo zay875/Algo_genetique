@@ -70,7 +70,7 @@ for instance_id in instances:
         instance_id=instance_id,
         ratio_binpacking=0.8
     )
-    print("→ Après génération de la population")
+    print(f"→ Après génération de la population pour l'instance {instance_id}")
     print(f"the result of generating the population{population}")
     print("hi")
     print(f"Population initiale : {len(population)} individus")
@@ -98,7 +98,7 @@ for instance_id in instances:
         len(docks_df),
         num_generations=5
     )  
-    print(f"the result of crossover and mutation{new_population}")
+    print(f"the result of crossover and mutation, la longeure {len(new_population)}{new_population}")
 
 
     print("=== Vérification de faisabilité de la population finale ===")
