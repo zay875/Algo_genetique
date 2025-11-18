@@ -46,9 +46,13 @@ data_docks = {
 instance_id = 2
 '''
 
-containers_df = pd.read_csv("petite_instances/coantainers.csv")
-trucks_df = pd.read_csv("petite_instances/trucks.csv")
-docks_df = pd.read_csv("petite_instances/docks.csv")
+#containers_df = pd.read_csv("petite_instances/coantainers.csv")
+#trucks_df = pd.read_csv("petite_instances/trucks.csv")
+#docks_df = pd.read_csv("petite_instances/docks.csv")
+containers_df = pd.read_csv("instances_v2/containers_all_v2.csv")
+trucks_df = pd.read_csv("instances_v2/trucks_all_v2.csv")
+docks_df = pd.read_csv("instances_v2/docks_all_v2.csv")
+
 num_generations= 5
 # Récupérer toutes les instances existantes
 instances = sorted(containers_df["Instance"].unique())
@@ -56,7 +60,7 @@ instances = sorted(containers_df["Instance"].unique())
 results = []  # pour stocker les résultats
 
 for instance_id in instances:
-    results = []  # pour stocker les résultats
+
     print("→ Avant génération de la population")
     #grouped_containers = group_containers_by_destination(containers_df)
     #check the trucks instances for capacity
@@ -74,8 +78,8 @@ for instance_id in instances:
     print(f"the result of generating the population{population}")
     print("hi")
     print(f"Population initiale : {len(population)} individus")
-
-    print("=== Vérification de faisabilité de la population initiale")
+    '''
+        print("=== Vérification de faisabilité de la population initiale")
     for i, chrom in enumerate(population):
         feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id)
         print(f"Chromosome {i} : {'OK' if feasible else 'NON FAISABLE'}")
@@ -83,6 +87,8 @@ for instance_id in instances:
             print("  Erreurs :", errors)
     if not population:
         raise ValueError("❌ Population vide — vérifie process_instance ou generate_random_chromosome.")
+
+    '''
 
     # Évaluateur de fitness (weights W1 and W2 explicit for clarity)
     fitness_eval = FitnessEvaluator(containers_df, trucks_df, C_E=0.5, W1=0.5, W2=0.5)
@@ -98,16 +104,18 @@ for instance_id in instances:
         len(docks_df),
         num_generations=5
     )  
-    print(f"the result of crossover and mutation, la longeure {len(new_population)}{new_population}")
+    #print(f"the result of crossover and mutation, la longeure {len(new_population)}{new_population}")
 
-
+    '''
+    
     print("=== Vérification de faisabilité de la population finale ===")
     for i, chrom in enumerate(new_population):
         feasible, errors = verify_solution_feasibility(chrom, trucks_df, containers_df, instance_id)
         print(f"Chromosome {i} : {'OK' if feasible else 'NON FAISABLE'}")
         if not feasible:
             print("  Erreurs :", errors)
-
+    '''
+    print(f"the result after GA{new_population}")
     print("hello") 
     #penalty_value, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df, containers_df, instance_id)
     cost = fitness_eval.calculate_truck_cost_f1(best_chrom)
@@ -143,5 +151,5 @@ for instance_id in instances:
 
 print("salut")
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary_GA_for_small_instance_2.csv", index=False)
+results_df.to_csv("results_summary_GA_instance_2.csv", index=False)
 print("\n✅ Tous les résultats enregistrés dans results_summary_GA_for_small_instance_2.csv")

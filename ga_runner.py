@@ -303,7 +303,7 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
     unassigned = [cid for cid in unassigned if cid in valid_ids]
 
     to_assign = list(set(unassigned) | set(removed))
-
+    print (f"the containers to assign{to_assign}")
     for cid in to_assign:
         
         cont_dest = df_containers.loc[df_containers["ContainerID"] == cid, "Destination"].iloc[0]
@@ -376,6 +376,15 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
 
         # 2. Garder élites
         elites = elitism_selection(population, fitness_values, num_elites)
+        #correct the elits
+        corrected_elites = []
+        for elite in elites:
+            feasible, errors = verify_solution_feasibility(elite, trucks_df, containers_df, instance_id)
+        if not feasible:
+            elite = correct_chrom(errors, elite, trucks_df, containers_df, instance_id)
+        corrected_elites.append(elite)
+
+        elites = corrected_elites
 
         # 3. Générer enfants
         max_attempts = 5  # pour éviter une boucle infinie
