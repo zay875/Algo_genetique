@@ -38,6 +38,7 @@ trucks_df = trucks_df[trucks_df["Instance"] == INSTANCE_ID].copy()
 docks_df = docks_df[docks_df["Instance"] == INSTANCE_ID].copy()
 #truck_cost_df = pd.read_csv("truck_cost.csv")
 '''
+
 def generate_random_chromosome(trucks_df, docks_df, containers_df, instance_id):
     chromosome = []
     df_cont  = containers_df[containers_df["Instance"] == instance_id].copy()
@@ -65,6 +66,58 @@ def generate_random_chromosome(trucks_df, docks_df, containers_df, instance_id):
         chromosome.extend([assignments[t], 0, dock_pos, 0])
 
     return chromosome
+
+'''
+def generate_random_chromosome(trucks_df, docks_df, containers_df, instance_id):
+    chromosome = []
+
+    df_cont  = containers_df[containers_df["Instance"] == instance_id].copy()
+    df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()
+    df_docks  = docks_df[docks_df["Instance"] == instance_id].copy()
+
+    dock_positions = df_docks['Position'].tolist()
+
+    truck_ids   = df_trucks['TruckID'].tolist()
+    capacities  = dict(zip(truck_ids, df_trucks['Capacity']))
+    destinations = dict(zip(truck_ids, df_trucks['Destination']))
+
+    containers = df_cont[['ContainerID','Length','Destination']].to_dict("records")
+    random.shuffle(containers)
+
+    assignments = {t: [] for t in truck_ids}
+
+    for c in containers:
+        cid = c['ContainerID']
+        length = c['Length']
+        dest = c['Destination']
+
+        # Camions faisables
+        feasible = [
+            t for t in truck_ids
+            if destinations[t] == dest and capacities[t] >= length
+        ]
+
+        if feasible:
+            chosen = random.choice(feasible)
+        else:
+            # 🎯 PAS DE SOLUTION → ON AFFECTE AU HASARD
+            chosen = random.choice(truck_ids)
+
+        assignments[chosen].append(cid)
+
+        # On décrémente la capacité seulement si le camion était faisable
+        if capacities[chosen] >= length:
+            capacities[chosen] -= length
+
+    # Construction du chromosome
+    for t in truck_ids:
+        dock_pos = random.choice(dock_positions)
+        chromosome.extend([assignments[t], 0, dock_pos, 0])
+
+    return chromosome
+
+'''
+
 
 def print_chromosome_assignments(chromosome, trucks_df):
     for i, t in enumerate(trucks_df['TruckID'].tolist()):

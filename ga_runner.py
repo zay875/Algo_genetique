@@ -70,6 +70,7 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
         if random.random() < mutation_rate:
             # mutation dock
             chromosome[i+2] = random.randint(1, num_docks)
+        
         if random.random() < mutation_rate and chromosome[i]:
             # mutation container swap
             containers = chromosome[i]
@@ -77,6 +78,32 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
                 idx1, idx2 = random.sample(range(len(containers)), 2)
                 containers[idx1], containers[idx2] = containers[idx2], containers[idx1]
                 chromosome[i] = containers
+        
+        '''
+        
+        if random.random() < mutation_rate and chromosome[i]:
+        # --- vraie mutation : déplacer 1 conteneur vers un autre camion ---
+
+            containers = chromosome[i]
+
+            # choisir un conteneur au hasard dans ce camion
+            container_to_move = random.choice(containers)
+
+            # retirer du camion actuel
+            containers.remove(container_to_move)
+
+            # choisir un autre camion comme destination
+            # (dire : les indices des camions sont : 0, 4, 8, 12, ... dans ton chromosome)
+            num_trucks = len(chromosome) // 4
+            current_truck_index = i // 4
+
+            # choisir un autre camion
+            new_truck_index = random.choice([t for t in range(num_trucks) if t != current_truck_index])
+
+            # ajouter au nouveau camion
+            new_position = new_truck_index * 4
+            chromosome[new_position].append(container_to_move)
+            '''
     return chromosome
 #diploid crossover inspired by the paper "A Diploid Evolutionary Algorithm for Sustainable Truck Scheduling at a Cross-Docking Facility by Maxim A. Dulebenets"
 '''
@@ -380,9 +407,9 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         corrected_elites = []
         for elite in elites:
             feasible, errors = verify_solution_feasibility(elite, trucks_df, containers_df, instance_id)
-        if not feasible:
-            elite = correct_chrom(errors, elite, trucks_df, containers_df, instance_id)
-        corrected_elites.append(elite)
+            if not feasible:
+                elite = correct_chrom(errors, elite, trucks_df, containers_df, instance_id)
+            corrected_elites.append(elite)
 
         elites = corrected_elites
 
@@ -392,11 +419,20 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         while len(offspring) < len(population) - num_elites:
             parent1 = tournament_selection(population, fitness_values)
             parent2 = tournament_selection(population, fitness_values)
+            attempts_parent = 0
+            while parent2 == parent1 and attempts_parent < 5:
+                parent2 = tournament_selection(population, fitness_values)
+                attempts_parent += 1
+
+                # Si toujours identiques → forcer une mutation forte pour créer de la diversité
+                if parent1 == parent2:
+                    parent2 = mutate(copy.deepcopy(parent2), num_docks, mutation_rate=0.5)  # mutation plus forte
             valid_children=[]
             for _ in range(max_attempts):
 
                 if random.random() < crossover_rate:
-                    child1, child2 = PMX_crossover(parent1, parent2)
+                    #child1, child2 = PMX_crossover(parent1, parent2)
+                    child1, child2 = truck_aligned_crossover(parent1, parent2)
                 else:
                     child1, child2 = copy.deepcopy(parent1), copy.deepcopy(parent2)
                 child1=mutate(child1, num_docks, mutation_rate)

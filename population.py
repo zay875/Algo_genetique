@@ -3,7 +3,7 @@ from binpacking import process_instance, binpacking_to_chromosome
 from utils import generate_random_chromosome
 import pandas as pd
 
-def generate_initial_population(pop_size, containers_df, trucks_df, docks_df, instance_id, ratio_binpacking=0.8):
+def generate_initial_population(pop_size, containers_df, trucks_df, docks_df, instance_id, ratio_binpacking=0.2):
     population, seen = [], set()
     num_bp = int(pop_size * ratio_binpacking)
     for i in range(num_bp):
@@ -14,10 +14,10 @@ def generate_initial_population(pop_size, containers_df, trucks_df, docks_df, in
         chrom = binpacking_to_chromosome(trucks_assigned, docks_df)
         print(f"chromosome: {chrom}")
         key = str(chrom)
-        '''
+        
         if key not in seen:
-        '''
-        population.append(chrom); seen.add(key)
+        
+            population.append(chrom); seen.add(key)
         
     while len(population) < pop_size:
         chrom = generate_random_chromosome(trucks_df , docks_df, containers_df,instance_id)

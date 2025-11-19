@@ -49,9 +49,9 @@ instance_id = 2
 #containers_df = pd.read_csv("petite_instances/coantainers.csv")
 #trucks_df = pd.read_csv("petite_instances/trucks.csv")
 #docks_df = pd.read_csv("petite_instances/docks.csv")
-containers_df = pd.read_csv("instances_v2/containers_all_v2.csv")
-trucks_df = pd.read_csv("instances_v2/trucks_all_v2.csv")
-docks_df = pd.read_csv("instances_v2/docks_all_v2.csv")
+containers_df = pd.read_csv("instances_v3/containers_all.csv")
+trucks_df = pd.read_csv("instances_v3/trucks_modifies.csv")
+docks_df = pd.read_csv("instances_v3/docks_all.csv")
 
 num_generations= 5
 # Récupérer toutes les instances existantes
@@ -72,7 +72,7 @@ for instance_id in instances:
         trucks_df=trucks_df,
         docks_df=docks_df,
         instance_id=instance_id,
-        ratio_binpacking=0.8
+        ratio_binpacking=0.2
     )
     print(f"→ Après génération de la population pour l'instance {instance_id}")
     print(f"the result of generating the population{population}")
@@ -92,7 +92,7 @@ for instance_id in instances:
 
     # Évaluateur de fitness (weights W1 and W2 explicit for clarity)
     fitness_eval = FitnessEvaluator(containers_df, trucks_df, C_E=0.5, W1=0.5, W2=0.5)
-
+    num_docks = len(docks_df[docks_df["Instance"] == instance_id])
     # Exécution du GA
     start_time = time.time()
     best_chrom, best_fit,history,new_population= run_ga(
@@ -101,7 +101,7 @@ for instance_id in instances:
         containers_df,
         trucks_df,
         instance_id,
-        len(docks_df),
+        num_docks,
         num_generations=5
     )  
     #print(f"the result of crossover and mutation, la longeure {len(new_population)}{new_population}")

@@ -46,7 +46,7 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     # --- Regrouper les conteneurs par destination (tri décroissant par longueur) ---
     grouped_containers = group_containers_by_destination(df_cont)
     unassigned_containers = []
-
+    
     # --- Affectation des conteneurs --- 
     for dest_id, containers_in_dest in grouped_containers.items():
         for container in containers_in_dest:
