@@ -132,7 +132,7 @@ def generate_instance(instance_id, D, N, H, K=7, Q=6, CE=0.5):
         # === Diagnostic test: destination mismatches ===
         missing_in_trucks = container_dests - truck_dests
         missing_in_containers = truck_dests - container_dests
-
+        '''
         if missing_in_trucks:
             print(f"[Instance {instance_id}] Destinations in containers but NOT in trucks: {sorted(missing_in_trucks)}")
             # create a truck with the missing destination and enough capacity
@@ -141,7 +141,7 @@ def generate_instance(instance_id, D, N, H, K=7, Q=6, CE=0.5):
             df_trucks = pd.concat([df_trucks, new_trucks_df], ignore_index=True)
         if missing_in_containers:
             print(f"[Instance {instance_id}] Destinations in trucks but NOT in containers: {sorted(missing_in_containers)}")
-        
+        '''
 
         # === Capacity check ===
         all_dests = container_dests.union(truck_dests)
@@ -156,7 +156,7 @@ def generate_instance(instance_id, D, N, H, K=7, Q=6, CE=0.5):
         df_docks,
         per_truck_capacity=Q,
         cost_map=cost_map
-                )
+                    )
         print("ADDED TRUCKS:\n", additional_trucks_df)
 
 

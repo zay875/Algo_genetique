@@ -72,7 +72,7 @@ for instance_id in instances:
         trucks_df=trucks_df,
         docks_df=docks_df,
         instance_id=instance_id,
-        ratio_binpacking=0.2
+        ratio_binpacking=0.8
     )
     print(f"→ Après génération de la population pour l'instance {instance_id}")
     print(f"the result of generating the population{population}")
