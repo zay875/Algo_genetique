@@ -60,7 +60,12 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     # --- Regrouper les conteneurs par destination (tri décroissant par longueur) ---
     grouped_containers = group_containers_by_destination(df_cont)
     print(f"grouped containers {grouped_containers}")
+    print("\n=== Vérification brute des destinations dans df_trucks ===")
+    print(df_trucks["Destination"].unique())
+    print(df_trucks)
+
     grouped_trucks= group_trucks_by_destination(df_trucks)
+    print(f"grouped trucks {grouped_trucks}")
     unassigned_containers = []
     print("\n=== TRUCK LIST BEFORE ASSIGNMENT ===")
     for t in truck_list:
@@ -196,8 +201,9 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
             # 4️⃣ Affecter ce conteneur dans trucks_assigned_containers_list
             truck_id = best_truck["TruckID"]
             idx = truck_index_map[truck_id]
-
-            trucks_assigned_containers_list[idx].append(container)
+            #get only the container id to append in container_assigned_list
+            assigned_container_id=container["ContainerID"]
+            trucks_assigned_containers_list[idx].append(assigned_container_id)
     return trucks_assigned_containers_list
     '''# --- Construire la sortie sous forme de liste ---
     df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()

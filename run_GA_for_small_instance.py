@@ -60,7 +60,8 @@ instances = sorted(containers_df["Instance"].unique())
 results = []  # pour stocker les résultats
 
 for instance_id in instances:
-
+    if instance_id > 10:
+        continue
     print("→ Avant génération de la population")
     #grouped_containers = group_containers_by_destination(containers_df)
     #check the trucks instances for capacity

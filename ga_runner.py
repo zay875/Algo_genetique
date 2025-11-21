@@ -357,9 +357,9 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
             for i in range(num_trucks):
                 block = chrom[i*4]
                 if len(block) == 0:      # 
-                #Modifier la destination du camion dans trucks_df
+                #Modifier la destination du camion dans df_trucks
                     tid = truck_ids[i]
-                    trucks_df.loc[trucks_df["TruckID"] == tid, "Destination"] = cont_dest
+                    df_trucks.loc[df_trucks["TruckID"] == tid, "Destination"] = cont_dest
                     block.append(cid)
                     assigned = True
                     break
