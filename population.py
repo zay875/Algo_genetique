@@ -12,7 +12,7 @@ def generate_initial_population(pop_size, containers_df, trucks_df, docks_df, in
         trucks_assigned= process_instance(instance_id, containers_df, trucks_df, docks_df)
 
         print(f"the truck container assignement list is : {trucks_assigned}")
-        chrom = binpacking_to_chromosome(trucks_assigned, docks_df)
+        chrom = binpacking_to_chromosome(trucks_assigned, docks_df,containers_df,instance_id)
         print(f"chromosome: {chrom}")
         '''
         key = str(chrom)

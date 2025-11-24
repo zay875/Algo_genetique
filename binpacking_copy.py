@@ -30,7 +30,10 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
         raise ValueError(f"❌ Aucun dock trouvé pour l’instance {instance_id}")
 
     df_trucks = df_trucks.sort_values("TruckID").reset_index(drop=True)
-
+    #extract dictionaire qui map container ids to container positions
+    #extract dictionaire qui map dock id to position
+    containers_positions = dict(zip(df_cont["ContainerID"], df_cont["Position"]))
+    docks_positions= dict(zip(df_docks["DockID"], df_docks["Position"]))
     dock_positions = df_docks["Position"].tolist()
     num_docks = len(dock_positions)
 
@@ -40,9 +43,15 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
 
     # --- Attribution des quais aux camions (round robin) ---
     for i, row in df_trucks.iterrows():
+        '''
         assigned_dock_id = dock_positions[i % num_docks]
         assigned_dock_position = docks_df[docks_df['DockID'] == assigned_dock_id]['Position'].iloc[0]
         assigned_dock_position = int(assigned_dock_position)
+        '''
+        #assigned_dock_id = df_docks["DockID"].iloc[i % num_docks]          # vrai DockID
+        #assigned_dock_position = df_docks["Position"].iloc[i % num_docks]  # vraie Position
+        assigned_dock_id=[]
+        assigned_dock_position=[]
         truck_list.append({
             'TruckID': row['TruckID'],
             'Capacity': row['Capacity'],
@@ -69,7 +78,7 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=Tru
     unassigned_containers = []
     print("\n=== TRUCK LIST BEFORE ASSIGNMENT ===")
     for t in truck_list:
-        print(t["TruckID"], "dest=", t["Destination"], "cap=", t["Capacity"])
+        print(t["TruckID"], "dest=", t["Destination"], "cap=", t["Capacity"],"AssignedDockID",t["AssignedDockID"],"AssignedDockPosition",t["AssignedDockPosition"])
 
     # --- Affectation des conteneurs --- 
     '''
@@ -272,7 +281,31 @@ def binpacking_to_chromosome(trucks_assigned_containers_list,trucks_df,docks_df)
 
     return chromosome
 '''
+#function to calculate the dockID like in Chargui
+def dock_assignement(trucks_assigned_containers_list, containers_positions, docks_positions):
+    truck_dock_assignments = []
 
+    # docks_positions : {dockID -> position}
+    dock_ids = list(docks_positions.keys())
+
+    for truck in trucks_assigned_containers_list:
+
+        if len(truck) == 0:
+            avg_pos = 0
+        else:
+            avg_pos = sum(containers_positions[c] for c in truck) / len(truck)
+
+        # choisir le dock dont la position est la plus proche
+        best_dock = min(
+            dock_ids,
+            key=lambda d: abs(docks_positions[d] - avg_pos)
+        )
+
+        truck_dock_assignments.append(best_dock)
+
+    return truck_dock_assignments
+
+'''
 def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df):
     chromosome = []
     dock_positions = docks_df['Position'].tolist()
@@ -280,6 +313,38 @@ def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df):
         dock_position = dock_positions[truck_id % len(dock_positions)]
         chromosome.extend([assigned, 0, dock_position, 0])
     return chromosome
+'''
+#calculating and assigning docks
+def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df, containers_df,instance_id):
+    df_cont  = containers_df[containers_df["Instance"] == instance_id].copy()
+    
+    df_docks = docks_df[docks_df["Instance"] == instance_id].copy()
+    chromosome = []
+
+    # dict : containerID -> position
+    containers_positions = dict(zip(df_cont["ContainerID"], containers_df["Position"]))
+
+    # dict : dockID -> position
+    docks_positions = dict(zip(df_docks["DockID"], df_docks["Position"]))
+    print("docks_positions=", docks_positions)
+
+    # dock IDs calculés par ton algorithme
+    assigned_docks = dock_assignement(
+        trucks_assigned_containers_list,
+        containers_positions,
+        docks_positions
+    )
+    print(f"the docks : {assigned_docks}")
+    # construction du chromosome
+    for i, assigned in enumerate(trucks_assigned_containers_list):
+
+        dock_id = assigned_docks[i]         # un DockID valide (1..n)
+        dock_position = docks_positions[dock_id]  # récupérer la Position
+
+        chromosome.extend([assigned, 0, dock_position, 0])
+
+    return chromosome
+
 # --- Functions from binpacking.ipynb ---
 def calculate_loading_times_df(chromosome, trucks_df, docks_df):
     """

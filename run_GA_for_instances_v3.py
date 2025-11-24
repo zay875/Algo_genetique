@@ -152,5 +152,5 @@ for instance_id in instances:
 
 print("salut")
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary_GA_instance_2.csv", index=False)
-print("\n✅ Tous les résultats enregistrés dans results_summary_GA_for_small_instance_2.csv")
+results_df.to_csv("results_summary_GA_instance_3.csv", index=False)
+print("\n✅ Tous les résultats enregistrés dans results_summary_GA_instance_3.csv")
