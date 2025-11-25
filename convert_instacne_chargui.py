@@ -73,7 +73,8 @@ def parse_benchmark_instance(path, instance_id="X"):
     data_cont = []
     for i in range(N):
         data_cont.append({
-            "Instance": instance_id,
+            "Instance_id": instance_id,
+            "Instance" : N,
             "ContainerID": i + 1,
             "Length": L[i],
             "Position": P[i],
@@ -90,7 +91,8 @@ def parse_benchmark_instance(path, instance_id="X"):
     dock_positions = [pos for row in R for pos in row]
 
     docks_df = pd.DataFrame({
-        "Instance": instance_id,
+        "Instance_id": instance_id,
+        "Instance" : K,
         "DockID": list(range(1, len(dock_positions) + 1)),
         "Position": dock_positions
     })
@@ -105,7 +107,8 @@ def parse_benchmark_instance(path, instance_id="X"):
     data_trucks = []
     for t in range(H):
         data_trucks.append({
-            "Instance": instance_id,
+            "Instance_id": instance_id,
+            "Instance" : H,
             "TruckID": t + 1,
             "Destination": D,               # unique destination
             "Cost": cost_for_destination,   # 351
@@ -137,3 +140,44 @@ trucks_df.to_csv("instance_chargui/trucks_Inst_4_1_4.csv", index=False)
 docks_df.to_csv("instance_chargui/docks_Inst_4_1_4.csv", index=False)
 
 print("CSV files saved successfully!")
+
+
+
+import os
+import pandas as pd
+
+INPUT_FOLDER = "Benchmark_instances_set_for_Sustainability_2019/instances/"
+OUTPUT_FOLDER = "Benchmark_instances_set_for_Sustainability_2019/converted_csv/"
+
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Parcourir tous les fichiers .txt
+instance_files = [f for f in os.listdir(INPUT_FOLDER) if f.endswith(".txt")]
+
+print(f"{len(instance_files)} fichiers trouvés.")
+
+for idx, filename in enumerate(instance_files, start=1):
+    instance_path = os.path.join(INPUT_FOLDER, filename)
+
+    try:
+        print(f"\n🔄 Conversion de : {filename}")
+
+        # Identifiant unique basé sur l'ordre ou sur le nom
+        instance_id = os.path.splitext(filename)[0]
+
+        containers_df, trucks_df, docks_df = parse_benchmark_instance(
+            instance_path,
+            instance_id=instance_id
+        )
+
+        # Save CSV output
+        containers_df.to_csv(os.path.join(OUTPUT_FOLDER, f"containers_{instance_id}.csv"), index=False)
+        trucks_df.to_csv(os.path.join(OUTPUT_FOLDER, f"trucks_{instance_id}.csv"), index=False)
+        docks_df.to_csv(os.path.join(OUTPUT_FOLDER, f"docks_{instance_id}.csv"), index=False)
+
+        print(f"✅ Conversion terminée : {filename}")
+
+    except Exception as e:
+        print(f" ERREUR lors de la conversion de {filename} : {e}")
+
+print("\n Toutes les instances ont été traitées !")

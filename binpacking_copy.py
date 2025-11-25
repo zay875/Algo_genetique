@@ -21,6 +21,7 @@ def group_trucks_by_destination(trucks_df):
     return grouped_trucks
 def process_instance(instance_id, containers_df, trucks_df, docks_df,verbose=True):
     # --- Préparation des données ---
+    print(f"the instance :{instance_id}")
     truck_list = []
     df_cont  = containers_df[containers_df["Instance"] == instance_id].copy()
     df_trucks = trucks_df[trucks_df["Instance"] == instance_id].copy()

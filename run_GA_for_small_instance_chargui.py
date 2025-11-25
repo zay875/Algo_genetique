@@ -1,11 +1,13 @@
 # run_all_instances.py
 import pandas as pd
 import time
-from population import generate_initial_population
+from population_copy import generate_initial_population
 from fitness import FitnessEvaluator
 from ga_runner import run_ga
 from utils import print_chromosome_assignments
 from utils import verify_solution_feasibility
+import re
+
 #from binpacking import ensure_capacity
 #from binpacking import group_containers_by_destination
 
@@ -45,23 +47,161 @@ data_docks = {
 
 instance_id = 2
 '''
+def parse_benchmark_instance(path, instance_id="X"):
+    """
+    Convertit une instance du benchmark .txt en containers_df, trucks_df, docks_df
+    """
 
-#containers_df = pd.read_csv("petite_instances/coantainers.csv")
-#trucks_df = pd.read_csv("petite_instances/trucks.csv")
-#docks_df = pd.read_csv("petite_instances/docks.csv")
-containers_df = pd.read_csv("instance_chargui/containers_Inst_4_1_4.csv")
-trucks_df = pd.read_csv("instance_chargui/trucks_Inst_4_1_4.csv")
-docks_df = pd.read_csv("instance_chargui/docks_Inst_4_1_4.csv")
+    # Lire fichier
+    with open(path, "r") as f:
+        text = f.read()
 
-num_generations= 5
-# Récupérer toutes les instances existantes
-instances = sorted(containers_df["Instance"].unique())
-print(containers_df["Instance"].dtype)
+    def extract_value(name):
+        """
+        Extrait un entier : N=4;
+        """
+        match = re.search(rf"{name}\s*=\s*(\d+)", text)
+        return int(match.group(1)) if match else None
+
+    def extract_list(name):
+        """
+        Extrait liste du style L = [3 5 2 3]
+        """
+        match = re.search(rf"{name}\s*=\s*\[([^\]]+)\]", text)
+        if not match:
+            return []
+        raw = match.group(1)
+        return list(map(int, re.findall(r"\d+", raw)))
+
+    def extract_matrix(name):
+        """
+        Extrait une matrice style :
+        R = [
+            3 8 13 18 23
+            28 33 38 43 48
+        ];
+        """
+        pattern = rf"{name}\s*=\s*\[([\s\S]*?)\];"
+        match = re.search(pattern, text)
+        if not match:
+            return []
+
+        raw = match.group(1).strip().split("\n")
+        matrix = []
+        for row in raw:
+            nums = list(map(int, re.findall(r"\d+", row)))
+            matrix.append(nums)
+        return matrix
 
 
-results = []  # pour stocker les résultats
+    # Extraction
+    N = extract_value("N")
+    H = extract_value("H")
+    Q = extract_value("Q")
+    D = extract_value("D")
+    K = extract_value("K")
+    Ce = extract_value("C_e")
 
-for instance_id in instances:
+    L = extract_list("L")          # longueurs
+    P = extract_list("P")          # positions conteneurs
+    G = extract_matrix("G")        # destinations conteneurs (1 ligne)
+    R = extract_matrix("R")        # positions quais
+
+    Cd = extract_list("C_d")       # coût par destination
+    
+
+
+    # -------------------------
+    # BUILD containers_df
+    # -------------------------
+    data_cont = []
+    for i in range(N):
+        data_cont.append({
+            "Instance" : instance_id,
+            "ContainerID": i + 1,
+            "Length": L[i],
+            "Position": P[i],
+            "Destination": G[0][i]   # unique ligne
+        })
+
+    containers_df = pd.DataFrame(data_cont)
+
+
+    # -------------------------
+    # BUILD docks_df
+    # flatten R
+    # -------------------------
+    dock_positions = [pos for row in R for pos in row]
+
+    docks_df = pd.DataFrame({
+    
+        "Instance" : instance_id,
+        "DockID": list(range(1, len(dock_positions) + 1)),
+        "Position": dock_positions
+    })
+
+
+    # -------------------------
+    # BUILD trucks_df
+    # -------------------------
+    # Assign dock positions in order
+    dock_cycle = dock_positions[:H]
+
+    data_trucks = []
+    for t in range(H):
+        data_trucks.append({
+            
+            "Instance" : instance_id,
+            "TruckID": t + 1,
+            "Destination": -1,
+              
+            "Cost": 0,   # 351
+            "Capacity": Q,                  # capacité
+            "DockPosition": dock_cycle[t],
+            "added": False
+        })
+
+    trucks_df = pd.DataFrame(data_trucks)
+
+    return containers_df, trucks_df, docks_df,Cd
+import os
+import pandas as pd
+
+INPUT_FOLDER = "Benchmark_instances_set_for_Sustainability_2019/instances/"
+
+
+# Parcourir tous les fichiers .txt
+instance_files = [f for f in os.listdir(INPUT_FOLDER) if f.endswith(".txt")]
+
+print(f"{len(instance_files)} fichiers trouvés.")
+
+for idx, filename in enumerate(instance_files, start=1):
+    instance_path = os.path.join(INPUT_FOLDER, filename)
+
+    try:
+        print(f"\n🔄 Conversion de : {filename}")
+        # Identifiant unique basé sur l'ordre ou sur le nom
+        #instance_id = os.path.splitext(filename)[0]
+        
+        instance_name = os.path.splitext(filename)[0]
+        instance_id = int(re.findall(r"\d+", instance_name)[0])   
+
+        print(f"the instances numbers: {instance_id}")
+
+
+        # Un SEUL appel pour tout extraire
+        containers_df, trucks_df, docks_df, destinations = parse_benchmark_instance(instance_path,instance_id=instance_id)
+
+    except Exception as e:
+        print(f" ERREUR lors de la conversion de {filename} : {e}")
+
+    num_generations= 5
+    # Récupérer toutes les instances existantes
+    #instances = sorted(containers_df["Instance"].unique())
+    #print(containers_df["Instance"].dtype)
+
+
+    results = []  # pour stocker les résultats
 
     print("→ Avant génération de la population")
     #grouped_containers = group_containers_by_destination(containers_df)
@@ -153,5 +293,5 @@ for instance_id in instances:
 
 print("salut")
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary_GA_instance_chargui_4_1_4.csv", index=False)
-print("\n✅ Tous les résultats enregistrés dans results_summary_GA_instance_chargui_4_1_4.csv")
+results_df.to_csv("results_summary_GA_ALL_instances_chargui.csv", index=False)
+print("\n✅ Tous les résultats enregistrés dans results_summary_GA_ALL_instances_chargui.csv")

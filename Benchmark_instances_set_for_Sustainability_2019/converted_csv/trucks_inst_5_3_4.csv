@@ -1,0 +1,5 @@
+Instance_id,Instance,TruckID,Destination,Cost,Capacity,DockPosition,added
+inst_5_3_4,4,1,3,771,13,3,False
+inst_5_3_4,4,2,3,771,13,8,False
+inst_5_3_4,4,3,3,771,13,13,False
+inst_5_3_4,4,4,3,771,13,18,False
