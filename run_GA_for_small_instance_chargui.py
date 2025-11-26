@@ -8,45 +8,7 @@ from utils import print_chromosome_assignments
 from utils import verify_solution_feasibility
 import re
 
-#from binpacking import ensure_capacity
-#from binpacking import group_containers_by_destination
 
-# Charger les CSV (chemins relatifs)
-'''
-containers_df = pd.read_csv("containers_all.csv")
-trucks_df = pd.read_csv("trucks_all.csv")
-docks_df = pd.read_csv("docks_all.csv")
-'''
-# Récupérer toutes les instances existantes
-#instances = sorted(containers_df["Instance"].unique())
-'''
-data_container = {
-    'ContainerID': [1, 2, 3, 4, 5, 6, 7, 8],
-    'Length': [2, 5, 3, 5, 5, 5, 4, 5],
-    'Position': [46, 24, 55, 6, 70, 24, 57, 17],
-    'Destination': [1, 2, 3, 3, 3, 3, 1, 1],
-    'Instance': [2, 2, 2, 2, 2, 2, 2, 2]
-}
-
-data_truck = {
-    'TruckID': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12],
-    'Destination': [2, 2, 1, 1, 2, 2, 1, 3, 2, 3, 3,3],
-    'Cost': [751, 751, 770, 770, 751, 751, 770, 766, 751, 766, 766,766],
-    'Capacity': [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,6],
-    'DockPosition': [2, 3, 2, 2, 1, 2, 3, 3, 5, 3, 5,1],
-    'Instance': [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2]
-}
-
-
-data_docks = {
-    'DockID': [1, 2, 3, 4, 5],
-    'Position': [4, 5, 2, 1, 3],
-    'Instance': [2, 2, 2, 2, 2]
-}
-
-
-instance_id = 2
-'''
 def parse_benchmark_instance(path, instance_id="X"):
     """
     Convertit une instance du benchmark .txt en containers_df, trucks_df, docks_df
@@ -74,24 +36,22 @@ def parse_benchmark_instance(path, instance_id="X"):
         return list(map(int, re.findall(r"\d+", raw)))
 
     def extract_matrix(name):
-        """
-        Extrait une matrice style :
-        R = [
-            3 8 13 18 23
-            28 33 38 43 48
-        ];
-        """
         pattern = rf"{name}\s*=\s*\[([\s\S]*?)\];"
         match = re.search(pattern, text)
         if not match:
             return []
 
-        raw = match.group(1).strip().split("\n")
+        raw_lines = match.group(1).strip().splitlines()
         matrix = []
-        for row in raw:
+        for row in raw_lines:
+            # On récupère tous les entiers de la ligne
             nums = list(map(int, re.findall(r"\d+", row)))
+            if not nums:
+                # ligne vide → on l'ignore
+                continue
             matrix.append(nums)
         return matrix
+
 
 
     # Extraction
@@ -115,16 +75,46 @@ def parse_benchmark_instance(path, instance_id="X"):
     # BUILD containers_df
     # -------------------------
     data_cont = []
-    for i in range(N):
+
+    nb_dest = len(G)   # normalement = D, une ligne par destination
+
+    for i in range(N):   # i = 0..N-1
+        dest_idx = None
+
+        for d in range(nb_dest):   # d = 0..D-1
+            row = G[d]
+            # sécurité si une ligne G est plus courte que N
+            if i < len(row) and row[i] == 1:
+                dest_idx = d+1       # ou d+1 si tu veux 1..D
+                break
+
+        if dest_idx is None:
+            # aucun 1 trouvé pour ce conteneur → cas anormal
+            print(f"⚠️ Aucun 1 trouvé dans G pour le conteneur {i+1} (instance {instance_id})")
+            dest_idx = -1  # ou 0, comme tu veux
+
         data_cont.append({
-            "Instance" : instance_id,
+            "Instance": instance_id,
             "ContainerID": i + 1,
             "Length": L[i],
             "Position": P[i],
-            "Destination": G[0][i]   # unique ligne
+            "Destination": dest_idx
         })
 
     containers_df = pd.DataFrame(data_cont)
+
+    
+
+    # Ajout du coût par conteneur en fonction de sa destination
+    def get_cost_for_dest(dest):
+        if dest <= 0:
+            return 0  # ou np.nan si tu préfères
+        if dest > len(Cd):
+            print(f"⚠️ Destination {dest} hors limites pour l'instance {instance_id}")
+            return 0
+        return Cd[dest - 1]
+
+    containers_df["Cost_destination"] = containers_df["Destination"].apply(get_cost_for_dest)
 
 
     # -------------------------
@@ -190,11 +180,11 @@ for idx, filename in enumerate(instance_files, start=1):
 
 
         # Un SEUL appel pour tout extraire
-        containers_df, trucks_df, docks_df, destinations = parse_benchmark_instance(instance_path,instance_id=instance_id)
+        containers_df, trucks_df, docks_df, cost_destinations = parse_benchmark_instance(instance_path,instance_id=instance_id)
 
     except Exception as e:
         print(f" ERREUR lors de la conversion de {filename} : {e}")
-
+    print(f"the destinations: {cost_destinations}")
     num_generations= 5
     # Récupérer toutes les instances existantes
     #instances = sorted(containers_df["Instance"].unique())
@@ -233,7 +223,7 @@ for idx, filename in enumerate(instance_files, start=1):
     '''
 
     # Évaluateur de fitness (weights W1 and W2 explicit for clarity)
-    fitness_eval = FitnessEvaluator(containers_df, trucks_df, C_E=0.5, W1=0.5, W2=0.5)
+    fitness_eval = FitnessEvaluator(containers_df, trucks_df,cost_destinations, C_E=0.5, W1=0.5, W2=0.5)
     num_docks = len(docks_df[docks_df["Instance"] == instance_id])
     # Exécution du GA
     start_time = time.time()

@@ -55,10 +55,6 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
 
     trucks_for_all = df_trucks.to_dict("records")
 
-    print("\n=== Vérification brute des destinations dans df_trucks ===")
-    print(df_trucks["Destination"].unique())
-    print(df_trucks)
-
     # Pour affichage
     grouped_trucks_display = {
         "ALL": trucks_for_all
@@ -94,63 +90,73 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
 
     truck_container_assignments = []
 
+    # Avant la boucle sur les destinations, initialiser la destination assignée des camions
+    for t in trucks_for_all:
+        t["AssignedDestination"] = None  # aucun camion n’a encore de destination
+
     for dest_id, cont_list in grouped_containers.items():
-        # Règle : tous les camions sont disponibles pour toutes destinations
+        # Tous les camions existent, mais on doit respecter AssignedDestination
         trucks_for_dest = trucks_for_all
 
-        # Ton code d’affectation existant ici :
-        # Index du camion qu'on va essayer en avançant
-        i = 0  
-
-        # Liste des camions déjà utilisés pour cette destination
-        used_trucks = []  
+        i = 0                # index dans trucks_for_dest
+        used_trucks = []     # camions déjà utilisés (pour cette destination)
 
         for container in cont_list:
-
             length = container["Length"]
             c_id = container["ContainerID"]
 
-            # 1️⃣ Vérifier d'abord dans les camions déjà utilisés
+            # 1️⃣ On cherche d'abord dans les camions déjà utilisés
             feasible_used = [
-                t for t in used_trucks if t["Capacity"] >= length
+                t for t in used_trucks
+                if t["Capacity"] >= length and (
+                    t["AssignedDestination"] is None or t["AssignedDestination"] == dest_id
+                )
             ]
 
             if feasible_used:
-                # Meilleur camion = capacité minimale mais suffisante
+                # camion avec capacité minimale suffisante
                 best_truck = min(feasible_used, key=lambda t: t["Capacity"])
 
             else:
-                # 2️⃣ Sinon avancer dans les camions triés par capacité descendante
+                # 2️⃣ Sinon, on cherche un nouveau camion compatible dans la liste globale
                 assigned = False
 
                 while i < len(trucks_for_dest):
                     candidate = trucks_for_dest[i]
 
-                    if candidate["Capacity"] >= length:
+                    # Vérifier la capacité ET la compatibilité de destination
+                    if (candidate["Capacity"] >= length and
+                        (candidate["AssignedDestination"] is None or
+                        candidate["AssignedDestination"] == dest_id)):
                         best_truck = candidate
                         assigned = True
                         break
+
                     i += 1
 
                 if not assigned:
-                    # Aucun camion ne peut le prendre
+                    # Aucun camion compatible → conteneur non assigné
                     unassigned_containers.append(c_id)
                     continue
 
-                # Ajouter ce camion à la liste des camions utilisés
-                used_trucks.append(best_truck)
+                # On ajoute ce camion à la liste des camions utilisés pour cette destination
+                if best_truck not in used_trucks:
+                    used_trucks.append(best_truck)
 
-            # 3️⃣ Mise à jour capacité du camion utilisé
+            # 3️⃣ Si c’est la première fois qu’on utilise ce camion, on lui fixe sa destination
+            if best_truck["AssignedDestination"] is None:
+                best_truck["AssignedDestination"] = dest_id
+
+            # 4️⃣ Mise à jour de la capacité
             best_truck["Capacity"] -= length
 
-            # 4️⃣ Affecter ce conteneur dans trucks_assigned_containers_list
+            # 5️⃣ Affectation du conteneur au camion (chromosome)
             truck_id = best_truck["TruckID"]
             idx = truck_index_map[truck_id]
-            #get only the container id to append in container_assigned_list
-            assigned_container_id=container["ContainerID"]
-            trucks_assigned_containers_list[idx].append(assigned_container_id)
-        # Exemple générique :
+            trucks_assigned_containers_list[idx].append(c_id)
+
     return trucks_assigned_containers_list
+
 
     
     '''# --- Construire la sortie sous forme de liste ---

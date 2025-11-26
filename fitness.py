@@ -2,12 +2,13 @@
 import pandas as pd
 from utils import verify_solution_feasibility
 class FitnessEvaluator:
-    def __init__(self, containers_df, trucks_df, C_E, W1=0.5, W2=0.5):
+    def __init__(self, containers_df, trucks_df,cost_destinations,C_E, W1=0.5, W2=0.5):
         self.containers_df = containers_df
         self.trucks_df = trucks_df
         self.C_E = C_E
         self.W1 = W1
         self.W2 = W2
+        self.cost_destinations=cost_destinations 
 
         #adding weights for penalty
         self.P_DUP=500   #duplicate penalty
@@ -23,9 +24,29 @@ class FitnessEvaluator:
 
         total_cost = 0
         for t in trucks_assigned:
-            row = self.trucks_df[self.trucks_df['TruckID'] == t]
-            if not row.empty:
-                total_cost += row['Cost'].iloc[0]
+            container_list = chromosome[(t - 1) * 4]
+
+            if len(container_list) == 0:
+                continue
+
+            # La destination (tous les conteneurs ont la même destination)
+            destinations = self.containers_df[
+                self.containers_df["ContainerID"].isin(container_list)
+            ]["Destination"].unique()
+
+            if len(destinations) != 1:
+                print(f"⚠️ Attention : camion {t} a plusieurs destinations ! {destinations}, chromosome : {chromosome}")
+                continue
+
+            dest = destinations[0]
+
+            # 3. Coût : cost_destinations[dest-1]
+            cost_d = self.cost_destinations[dest - 1]
+
+            total_cost += cost_d
+            #row = self.trucks_df[self.trucks_df['TruckID'] == t]
+            #if not row.empty:
+                #total_cost += row['Cost'].iloc[0]
         return total_cost
 
     def calculate_energy_cost_f2(self, chromosome):

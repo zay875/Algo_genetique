@@ -167,12 +167,24 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
             total_length += cont_info["Length"]
 
             #La destination du camion doit correspondre à celle du conteneur qui lui est assigné.
+            #update: selon le papier chargui les camions n'ont pas de destinations prédefinies
+            
+            # Si la destination du conteneur est -1 → on ignore
+            if cont_info["Destination"] == -1:
+                continue
+
+            # Si la destination du camion n'est pas encore fixée, ignorer aussi
+            if truck_destination in (None, -1):
+                continue
+
+            # Maintenant, on peut vérifier si les destinations ne correspondent pas
             if cont_info["Destination"] != truck_destination:
                 errors.append(
                     f"❌ Conteneur {c_id} (dest {cont_info['Destination']}) "
                     f"assigné à camion {truck_id} (dest {truck_destination})"
                 )
 
+            
         if total_length > truck_capacity:
             errors.append(
                 f"⚠️ Camion {truck_id} dépasse la capacité ({total_length}/{truck_capacity})"
@@ -180,6 +192,17 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
 
         
         all_assigned_containers.extend(containers_assigned)
+        # 🔍 ***Nouvelle vérification : homogénéité des destinations dans un camion***  
+        dests = [
+            df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0]
+            for c in containers_assigned
+            if df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0] != -1
+        ]
+
+        if len(dests) > 1 and len(set(dests)) != 1:
+            errors.append(
+                f"❌ Camion {truck_id} contient plusieurs destinations {set(dests)}"
+            )
     # 3️⃣ Check unassigned containers
     #tout les contenerus doivent etre assigné 
     all_containers = df_containers["ContainerID"].tolist()
