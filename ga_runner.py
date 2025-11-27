@@ -290,6 +290,13 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
         if "n'existe pas" in e:
             cid = int(e.split()[2])
             wrong_assignment.append(cid)
+        #add verification for containers destinations in the same truck must all have one destination
+        if "contient plusieurs destinations" in e:
+            parts = e.split()
+            t_id = int(parts[2])
+            C_id=int(parts[6])
+            wrong_assignment.append(C_id)
+
 
         if "sans camion correspondant" in e:
             # Exemple: Bloc chromosome 10 sans camion correspondant
