@@ -36,21 +36,43 @@ def parse_benchmark_instance(path, instance_id="X"):
         return list(map(int, re.findall(r"\d+", raw)))
 
     def extract_matrix(name):
+        """
+        Extrait correctement les matrices multilignes du style :
+
+        G = [
+            0 1 0 ...
+            0 0 1 ...
+            ...
+        ];
+
+        Fonction robuste qui gère :
+        ✔ lignes vides
+        ✔ tabulations
+        ✔ espaces irréguliers
+        ✔ matrices étalées sur plusieurs lignes
+        """
         pattern = rf"{name}\s*=\s*\[([\s\S]*?)\];"
-        match = re.search(pattern, text)
+        match = re.search(pattern, text, re.MULTILINE)
+
         if not match:
             return []
 
-        raw_lines = match.group(1).strip().splitlines()
+        block = match.group(1)
+
         matrix = []
-        for row in raw_lines:
-            # On récupère tous les entiers de la ligne
-            nums = list(map(int, re.findall(r"\d+", row)))
-            if not nums:
-                # ligne vide → on l'ignore
+        for line in block.splitlines():
+            # ignore lignes vides ou blanches
+            if not line.strip():
                 continue
-            matrix.append(nums)
+
+            # extraire tous les entiers de la ligne
+            nums = list(map(int, re.findall(r"-?\d+", line)))
+
+            if nums:
+                matrix.append(nums)
+
         return matrix
+
 
 
 
@@ -64,11 +86,27 @@ def parse_benchmark_instance(path, instance_id="X"):
 
     L = extract_list("L")          # longueurs
     P = extract_list("P")          # positions conteneurs
-    G = extract_matrix("G")        # destinations conteneurs (1 ligne)
-    R = extract_matrix("R")        # positions quais
+    G = extract_matrix("G")
+    if len(G) != D:
+        print(f"⚠️ WARNING: G contient {len(G)} lignes mais D = {D} (instance {instance_id})")
 
+    for row in G:
+        if len(row) != N:
+            print(f"⚠️ Ligne de G de longueur {len(row)} au lieu de N = {N}")
+        # destinations conteneurs (1 ligne)
+    R = extract_matrix("R")        # positions quais
+    print("DEBUG R rows:", len(R))
+    print("DEBUG R row lengths:", [len(r) for r in R])
+    print("DEBUG dock_positions length:", len([pos for row in R for pos in row]))
+    print("Expected H =", H)
     Cd = extract_list("C_d")       # coût par destination
     
+    print("DEBUG :: N =", N)
+    print("DEBUG :: len(L) =", len(L))
+    print("DEBUG :: len(P) =", len(P))
+    print("DEBUG :: G rows =", len(G))
+    print("DEBUG :: G row lengths =", [len(r) for r in G])
+    print("DEBUG :: len(Cd) =", len(Cd))
 
 
     # -------------------------
@@ -135,10 +173,11 @@ def parse_benchmark_instance(path, instance_id="X"):
     # BUILD trucks_df
     # -------------------------
     # Assign dock positions in order
-    dock_cycle = dock_positions[:H]
+    
 
     data_trucks = []
     for t in range(H):
+        assigned_position = dock_positions[t % len(dock_positions)]
         data_trucks.append({
             
             "Instance" : instance_id,
@@ -147,7 +186,7 @@ def parse_benchmark_instance(path, instance_id="X"):
               
             "Cost": 0,   # 351
             "Capacity": Q,                  # capacité
-            "DockPosition": dock_cycle[t],
+            "DockPosition": assigned_position,
             "added": False
         })
 
@@ -164,7 +203,7 @@ INPUT_FOLDER = "Benchmark_instances_set_for_Sustainability_2019/instances/"
 instance_files = [f for f in os.listdir(INPUT_FOLDER) if f.endswith(".txt")]
 
 print(f"{len(instance_files)} fichiers trouvés.")
-
+results = []  # pour stocker les résultats
 for idx, filename in enumerate(instance_files, start=1):
     instance_path = os.path.join(INPUT_FOLDER, filename)
 
@@ -181,17 +220,17 @@ for idx, filename in enumerate(instance_files, start=1):
 
         # Un SEUL appel pour tout extraire
         containers_df, trucks_df, docks_df, cost_destinations = parse_benchmark_instance(instance_path,instance_id=instance_id)
-
+        print("the destinations:", cost_destinations) 
     except Exception as e:
         print(f" ERREUR lors de la conversion de {filename} : {e}")
-    print(f"the destinations: {cost_destinations}")
+    
     num_generations= 5
     # Récupérer toutes les instances existantes
     #instances = sorted(containers_df["Instance"].unique())
     #print(containers_df["Instance"].dtype)
 
 
-    results = []  # pour stocker les résultats
+    
 
     print("→ Avant génération de la population")
     #grouped_containers = group_containers_by_destination(containers_df)
@@ -206,8 +245,8 @@ for idx, filename in enumerate(instance_files, start=1):
         instance_id=instance_id,
         ratio_binpacking=0.8
     )
-    print(f"→ Après génération de la population pour l'instance {instance_id}")
-    print(f"the result of generating the population{population}")
+    #print(f"→ Après génération de la population pour l'instance {instance_id}")
+    #print(f"the result of generating the population{population}")
     print("hi")
     print(f"Population initiale : {len(population)} individus")
     '''
@@ -247,10 +286,10 @@ for idx, filename in enumerate(instance_files, start=1):
         if not feasible:
             print("  Erreurs :", errors)
     '''
-    print(f"the result after GA{new_population}")
+    #print(f"the result after GA{new_population}")
     print("hello") 
     #penalty_value, _ = fitness_eval.calculate_penalties(best_chrom, trucks_df, containers_df, instance_id)
-    cost = fitness_eval.calculate_truck_cost_f1(best_chrom)
+    cost = fitness_eval.calculate_truck_cost_f1_from_chrom(best_chrom,instance_id)
     energy = fitness_eval.calculate_energy_cost_f2(best_chrom)
 
     # Final fitness using configured weights and including penalties

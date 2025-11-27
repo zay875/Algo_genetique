@@ -40,27 +40,28 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
     # GROUPEMENT DES CONTENEURS PAR DESTINATION
     # (utile si ton heuristique trie selon G)
     # ===============================
-
+    
     grouped_containers = {
         dest: rows.to_dict("records")
         for dest, rows in df_cont.groupby("Destination")
     }
-
+    '''
     print("grouped containers", grouped_containers)
-
+    '''
     # ===============================
     # PAS DE GROUPEMENT DES CAMIONS PAR DESTINATION
     # → RÈGLE : TOUS LES CAMIONS PEUVENT SERVIR TOUTES LES DESTINATIONS
     # ===============================
 
     trucks_for_all = df_trucks.to_dict("records")
-
+    
     # Pour affichage
     grouped_trucks_display = {
         "ALL": trucks_for_all
     }
+    '''
     print("grouped trucks", grouped_trucks_display)
-
+    '''
     # ===============================
     # CONSTRUCTION DE LA LISTE DE CAMIONS
     # ===============================
@@ -79,11 +80,12 @@ def process_instance(instance_id, containers_df, trucks_df, docks_df):
     truck_index_map = {t["TruckID"]: idx for idx, t in enumerate(trucks_list)}
     print("\n=== TRUCK LIST BEFORE ASSIGNMENT ===")
     unassigned_containers = []
+    '''
     for t in trucks_list:
         print(t["TruckID"], "dest=", t["Destination"], "cap=", t["Capacity"],
               "AssignedDockID", t["AssignedDockID"],
               "AssignedDockPosition", t["AssignedDockPosition"])
-
+    '''
     # ===============================
     # BINPACKING : TU UTILISES TOUS LES CAMIONS POUR TOUTES DESTINATIONS
     # ===============================

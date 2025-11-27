@@ -191,18 +191,25 @@ def verify_solution_feasibility(chromosome, trucks_df, containers_df,instance_id
             )
 
         
-        all_assigned_containers.extend(containers_assigned)
         # 🔍 ***Nouvelle vérification : homogénéité des destinations dans un camion***  
-        dests = [
-            df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0]
+
+        # Construire liste (container_id, destination)
+        cont_dest_pairs = [
+            (c, df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0])
             for c in containers_assigned
             if df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0] != -1
         ]
 
+        # Extraire juste les destinations
+        dests = [dest for (_, dest) in cont_dest_pairs]
+        all_assigned_containers.extend(containers_assigned)
+        # Vérification : plusieurs destinations différentes ?
         if len(dests) > 1 and len(set(dests)) != 1:
             errors.append(
-                f"❌ Camion {truck_id} contient plusieurs destinations {set(dests)}"
+                f"❌ Camion {truck_id} contient plusieurs destinations {set(dests)} | "
+                f"Conteneurs : {cont_dest_pairs}"
             )
+
     # 3️⃣ Check unassigned containers
     #tout les contenerus doivent etre assigné 
     all_containers = df_containers["ContainerID"].tolist()

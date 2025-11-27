@@ -1,9 +1,11 @@
 
 import random
+import re
 import copy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from collections import Counter
 from utils import  verify_solution_feasibility
 
 # --- SELECTION ---
@@ -19,6 +21,14 @@ def elitism_selection(population, fitness_values, num_elites):
     ranked = sorted(zip(population, fitness_values), key=lambda x: x[1])
     return [copy.deepcopy(ind) for ind, fit in ranked[:num_elites]]
 
+'''
+def elitism_selection(pop, fit, feas, num_elites):
+    ranked = sorted(
+        range(len(pop)),
+        key=lambda i: (not feas[i], fit[i])
+    )
+    return [copy.deepcopy(pop[i]) for i in ranked[:num_elites]]
+'''
 # --- CROSSOVER ---
 def truck_aligned_crossover(parent1, parent2):
     """
@@ -265,6 +275,7 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
     wrong_assignment = []
     duplicates = []
     capacity_errors = []
+    multiple_destinations=[]
     for e in errors:
         
         if "assigné à camion" in e:
@@ -292,10 +303,28 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
             wrong_assignment.append(cid)
         #add verification for containers destinations in the same truck must all have one destination
         if "contient plusieurs destinations" in e:
-            parts = e.split()
-            t_id = int(parts[2])
-            C_id=int(parts[6])
-            wrong_assignment.append(C_id)
+
+            # Extract truck id
+            t_id = int(re.search(r"Camion (\d+)", e).group(1))
+
+            # Extract the destination set {…}
+            dest_text = re.search(r"\{.*?\}", e).group(0)
+            dests = eval(dest_text)  # safe because string comes from your code
+
+            # Extract the list of (container_id, destination) pairs
+            cont_text = re.search(r"Conteneurs\s*:\s*(\[.*\])", e).group(1)
+            cont_pairs = eval(cont_text)  # list of tuples like [(8,1), (12,3), ...]
+
+            multiple_destinations.append({
+                "truck_id": t_id,
+                "destinations": dests,
+                "containers": cont_pairs
+            })
+
+            print("Truck:", t_id)
+            print("Destinations:", dests)
+            print("Containers:", cont_pairs)
+
 
 
         if "sans camion correspondant" in e:
@@ -303,8 +332,52 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
             block_idx = int(e.split()[3])
             # On vide ce block
             chrom[block_idx*4] = []
+    
+        
+# garder les destinations les plus courante dans les camion à plusieurs destinations et enlever ceux aevc moin de destination
+    cleaned_assignments = []
+    removed = []
+
+    for entry in multiple_destinations:
+
+        t_id = entry["truck_id"]
+        cont_pairs = entry["containers"]   # [(c_id, dest), (c_id, dest), ...]
+        
+        # Extraire uniquement la liste des destinations
+        dest_list = [dest for (_, dest) in cont_pairs]
+
+        # Calculer la destination dominante
+        counter = Counter(dest_list)
+        dominant_dest = counter.most_common(1)[0][0]
+
+        print(f"Camion {t_id} → destination dominante = {dominant_dest}")
+
+        # Garder seulement les conteneurs avec la destination dominante
+        kept_containers = [c for (c, dest) in cont_pairs if dest == dominant_dest]
+
+        # Les autres → removed
+        removed_containers = [c for (c, dest) in cont_pairs if dest != dominant_dest]
+
+        cleaned_assignments.append({
+            "truck_id": t_id,
+            "dominant_destination": dominant_dest,
+            "kept": kept_containers,
+            "removed": removed_containers
+        })
+
+        # Ajouter à la liste globale removed
+        removed.extend(removed_containers)
+
+
+    # Debug
+    print("\n=== Résultat nettoyage ===")
+    for entry in cleaned_assignments:
+        print(entry)
+
+    print("\n=== Conteneurs retirés ===")
+    print(removed)
     #enlever les conteneurs duppliqué
- 
+    
     for cid in duplicates:
         for i in range(num_blocks):
             block_containers = chrom[i*4]
@@ -313,15 +386,16 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
                 
     
     # enlever les conteneurs assigné au mauvais camion
-    removed = set()
+    
 
     for cid in wrong_assignment:
         for i in range(num_blocks):
             block_containers = chrom[i*4]
             if cid in block_containers:
                 block_containers.remove(cid)
-                removed.add(cid)
-    
+                removed.append(cid)
+
+
 
         
     #assigner les contenerus enlevé et non assigné
@@ -333,46 +407,89 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
     all_unassigned = list(unassigned)
 
     # Mais on ne réassigne que les conteneurs valables
+    # aplatissement LISTE DE LISTES -> LISTE SIMPLE
+    flat_removed = []
+    for item in removed:
+        if isinstance(item, list):
+            flat_removed.extend(item)
+        else:
+            flat_removed.append(item)
+
+    removed = flat_removed
+
     removed = [cid for cid in removed if cid in valid_ids]
     unassigned = [cid for cid in unassigned if cid in valid_ids]
 
     to_assign = list(set(unassigned) | set(removed))
     #print (f"the containers to assign{to_assign}")
+
+
+    # Retirer tous les conteneurs retirés des blocs existants
+    for cid in removed:
+        for i in range(num_blocks):
+            block_containers = chrom[i*4]
+            if cid in block_containers:
+                block_containers.remove(cid)
+                chrom[i*4] = block_containers  # ← IMPORTANT
+
+
+    # Retirer les unassigned des blocs
+    for cid in unassigned:
+        for i in range(num_blocks):
+            block_containers = chrom[i*4]
+            if cid in block_containers:
+                block_containers.remove(cid)
+                chrom[i*4] = block_containers
+
     for cid in to_assign:
-        
+
         cont_dest = df_containers.loc[df_containers["ContainerID"] == cid, "Destination"].iloc[0]
         cont_len  = df_containers.loc[df_containers["ContainerID"] == cid, "Length"].iloc[0]
-        assigned= False
-        # Chercher camion compatible
+        assigned = False
+
+        # 🔍 1. Chercher camion avec même destination (déduite du chromosome)
         for i in range(num_trucks):
+
+            block_containers = chrom[i*4]   # conteneurs déjà assignés
             tid = truck_ids[i]
-            if df_trucks.loc[df_trucks["TruckID"] == tid, "Destination"].iloc[0] != cont_dest:
-                continue
 
-            block_containers = chrom[i*4]
-            current_len = sum(df_containers[df_containers["ContainerID"] == c]["Length"].iloc[0]
-                              for c in block_containers)
+            if len(block_containers) > 0:
+                # destinations des conteneurs déjà présents
+                block_dests = [
+                    df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0]
+                    for c in block_containers
+                    if df_containers.loc[df_containers["ContainerID"] == c, "Destination"].iloc[0] != -1
+                ]
 
+                # 🚫 Camion incompatible → aucune destination égale
+                if len(block_dests) > 0 and cont_dest not in block_dests:
+                    continue
+
+            # 🔍 Vérifier la capacité
+            current_len = sum(
+                df_containers.loc[df_containers["ContainerID"] == c, "Length"].iloc[0]
+                for c in block_containers
+            )
             truck_cap = df_trucks.loc[df_trucks["TruckID"] == tid, "Capacity"].iloc[0]
 
             if current_len + cont_len <= truck_cap:
                 block_containers.append(cid)
                 assigned = True
                 break
-        #chercher un camion vide 
+
+        # 🔍 2. Sinon, chercher un camion vide
         if not assigned:
             for i in range(num_trucks):
                 block = chrom[i*4]
-                if len(block) == 0:      # 
-                #Modifier la destination du camion dans df_trucks
+                if len(block) == 0:
                     tid = truck_ids[i]
+                    # camion prend la destination du conteneur
                     df_trucks.loc[df_trucks["TruckID"] == tid, "Destination"] = cont_dest
                     block.append(cid)
                     assigned = True
                     break
-
-    return chrom        
-
+      
+    return chrom
     #corriger le conteneurs enlevé et non assingeé
 
 # --- MAIN GA LOOP ---
@@ -410,17 +527,31 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
 
         # 2. Garder élites
         elites = elitism_selection(population, fitness_values, num_elites)
+        print(f"elits before correct chrom: {elites}")
         #correct the elits
         corrected_elites = []
+        for elite in elites:
+            print("\n--- ELITE AVANT CORRECTION ---")
+            print(elite)
+            feasible, errors = verify_solution_feasibility(elite, trucks_df, containers_df, instance_id)
+            print(f"Feasible? {feasible}, errors: {errors}")
+        if not feasible:
+            corrected = correct_chrom(errors, elite, trucks_df, containers_df, instance_id)
+            print("--- ELITE APRÈS CORRECTION ---")
+            print(corrected)
+            elite = corrected
+        corrected_elites.append(elite)
+        '''
         for elite in elites:
             feasible, errors = verify_solution_feasibility(elite, trucks_df, containers_df, instance_id)
             print(f"the error:  {errors}, {feasible}")
             if not feasible:
                 elite = correct_chrom(errors, elite, trucks_df, containers_df, instance_id)
             corrected_elites.append(elite)
-
+        print(f"the corrected elits are {corrected_elites}")
         elites = corrected_elites
         print(f"the elits are : {elites}")
+        '''
         # 3. Générer enfants
         max_attempts = 5  # pour éviter une boucle infinie
         offspring = []
@@ -458,13 +589,29 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
                 else:
                     #corriger le chromosome
                     child1 = correct_chrom(errors1, child1, trucks_df, containers_df, instance_id)
+                    feasible_after, error_after=verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
+                    print(f"the error after correcting the children after GA {error_after} and the child is {child1}")
+                    if not feasible_after:
+                        child1=correct_chrom(error_after, child1, trucks_df, containers_df, instance_id)
+                        feasible_after4, error_after4=verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
+                        print(f"the error after correcting the children after GA {error_after4}and the child is {child1}")
+                        valid_children.append(child1)
+                    else:
+                        valid_children.append(child1)
                     
-                    valid_children.append(child1)
                 if feasible2:
                     valid_children.append(child2)
                 else:
                     child2 = correct_chrom(errors2, child2, trucks_df, containers_df, instance_id)
-                    valid_children.append(child2)
+                    feasible_after2, error_after2=verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
+                    print(f"the error after correcting the children after GA after second corection {error_after2}and the child is {child2}")
+                    if not feasible_after2:
+                        child2=correct_chrom(error_after2, child2, trucks_df, containers_df, instance_id)
+                        feasible_after3, error_after3=verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
+                        print(f"the error after correcting the children after GA after second corection {error_after3}and the child is {child2}")
+                        valid_children.append(child2)
+                    else:
+                        valid_children.append(child2)
 
         # Si on a trouvé des enfants valides, on sort de la boucle
                 if len(valid_children) >= 2:
