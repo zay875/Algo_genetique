@@ -576,6 +576,7 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
                     child1, child2 = truck_aligned_crossover(parent1, parent2)
                 else:
                     child1, child2 = copy.deepcopy(parent1), copy.deepcopy(parent2)
+                    
                 child1=mutate(child1, num_docks, mutation_rate)
                 child2=mutate(child2, num_docks, mutation_rate)
 

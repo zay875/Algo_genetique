@@ -233,7 +233,7 @@ def dock_assignement(trucks_assigned_containers_list, containers_positions, dock
     truck_dock_assignments = []
 
     # docks_positions : {dockID -> position}
-    dock_ids = list(docks_positions.keys())
+    #dock_ids = list(docks_positions.keys())
 
     for truck in trucks_assigned_containers_list:
 
@@ -243,12 +243,19 @@ def dock_assignement(trucks_assigned_containers_list, containers_positions, dock
             avg_pos = sum(containers_positions[c] for c in truck) / len(truck)
 
         # choisir le dock dont la position est la plus proche
-        best_dock = min(
+        '''best_dock = min(
             dock_ids,
             key=lambda d: abs(docks_positions[d] - avg_pos)
         )
+        '''
+        best_position = min(
+            docks_positions.values(),
+            key=lambda pos: abs(pos - avg_pos)
+        )
 
-        truck_dock_assignments.append(best_dock)
+
+
+        truck_dock_assignments.append(best_position)
 
     return truck_dock_assignments
 
@@ -269,7 +276,7 @@ def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df, containe
     chromosome = []
 
     # dict : containerID -> position
-    containers_positions = dict(zip(df_cont["ContainerID"], containers_df["Position"]))
+    containers_positions = dict(zip(df_cont["ContainerID"], df_cont["Position"]))
 
     # dict : dockID -> position
     docks_positions = dict(zip(df_docks["DockID"], df_docks["Position"]))
@@ -285,8 +292,8 @@ def binpacking_to_chromosome(trucks_assigned_containers_list, docks_df, containe
     # construction du chromosome
     for i, assigned in enumerate(trucks_assigned_containers_list):
 
-        dock_id = assigned_docks[i]         # un DockID valide (1..n)
-        dock_position = docks_positions[dock_id]  # récupérer la Position
+        #dock_id = assigned_docks[i]         # un DockID valide (1..n)
+        dock_position = assigned_docks[i]  # le qaui
 
         chromosome.extend([assigned, 0, dock_position, 0])
 

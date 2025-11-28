@@ -81,7 +81,7 @@ class FitnessEvaluator:
             for c in containers:
                 info = self.containers_df[self.containers_df['ContainerID'] == c].iloc[0]
                 pos, length = info['Position'], info['Length']
-                z = 2 * abs(pos - dock) + 10 * length
+                z = 2 * abs(pos - dock) + 12 * length
                 total += self.C_E * z
         return total
     

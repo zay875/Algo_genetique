@@ -3,15 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Charger les fichiers
-ga = pd.read_csv("results_summary.csv")
-exact = pd.read_csv("results_exact_summary.csv")
-random = pd.read_csv("results_summary_ramdom_pop.csv")
+ga = pd.read_csv("results_summary_GA_ALL_instances_chargui.csv")
+exact = pd.read_csv("results_exact_summary_with_chargui_instances.csv")
+#random = pd.read_csv("results_summary_ramdom_pop.csv")
 
 # Normaliser la colonne Instance en int (si présente)
-for df in (ga, exact, random):
-    if "Instance" in df.columns:
+for df in (ga, exact):
+    if "file name" in df.columns:
         try:
-            df["Instance"] = df["Instance"].astype(int)
+            df["file name"] = df["file name"].astype(str)
         except Exception:
             # leave as-is if conversion fails
             pass
@@ -31,14 +31,18 @@ if "ExecutionTime(s)" in exact_opt.columns and "ExecutionTime(s)_Exact" not in e
     exact_opt = exact_opt.rename(columns={"ExecutionTime(s)": "ExecutionTime(s)_Exact"})
 
 # Normaliser random
+'''
 if "BestFitness" in random.columns and "BestFitness_random" not in random.columns:
     random = random.rename(columns={"BestFitness": "BestFitness_random"})
 if "ExecutionTime(s)" in random.columns and "ExecutionTime(s)_random" not in random.columns:
     random = random.rename(columns={"ExecutionTime(s)": "ExecutionTime(s)_random"})
-
+'''
 # Fusionner (GA + Exact) puis Random
-merged = pd.merge(ga, exact_opt, on="Instance", how="inner")
-merged = pd.merge(merged, random, on="Instance", how="left")
+print("GA columns:", ga.columns.tolist())
+print("Exact columns:", exact_opt.columns.tolist())
+
+merged = pd.merge(ga, exact_opt, on="file name", how="inner")
+#merged = pd.merge(merged, random, on="Instance", how="left")
 
 # Calculer le pourcentage d'écart en utilisant BestFitness_GA vs Objective
 import numpy as np
@@ -60,7 +64,7 @@ merged["Gap(%)"] = merged.apply(compute_gap, axis=1)
 print("\n=== Comparaison GA vs Exact ===")
 # Safe column names for display
 cols_to_show = [
-    "Instance",
+    "file name",
     "BestFitness_GA" if "BestFitness_GA" in merged.columns else ("BestFitness" if "BestFitness" in merged.columns else None),
     "BestFitness_random" if "BestFitness_random" in merged.columns else None,
     "Objective" if "Objective" in merged.columns else None,
@@ -74,8 +78,8 @@ print(merged[cols_to_show])
 print("\n📊 Moyenne de l'écart (%) :", merged["Gap(%)"].mean())
 
 # === Sauvegarder le récapitulatif ===
-output_file = "comparison_summary_after_ading_dock_condtraint.csv"
-save_cols = ["Instance"]
+output_file = "comparison_summary_GA_VS_Exact_chargui_intances.csv"
+save_cols = ["file name"]
 if "BestFitness_GA" in merged.columns:
     save_cols.append("BestFitness_GA")
 elif "BestFitness" in merged.columns:
@@ -98,14 +102,14 @@ print(f"\n💾 Résumé sauvegardé dans {output_file}")
 # Graphique de comparaison
 plt.figure(figsize=(10,6))
 if "Objective" in merged.columns:
-    plt.plot(merged["Instance"], merged["Objective"], label="Exact (Optimal)", marker="o")
+    plt.plot(merged["file name"], merged["Objective"], label="Exact (Optimal)", marker="o")
 if "BestFitness_GA" in merged.columns:
-    plt.plot(merged["Instance"], merged["BestFitness_GA"], label="GA (Best Fitness)", marker="s")
+    plt.plot(merged["file name"], merged["BestFitness_GA"], label="GA (Best Fitness)", marker="s")
 elif "BestFitness" in merged.columns:
-    plt.plot(merged["Instance"], merged["BestFitness"], label="GA (Best Fitness)", marker="s")
+    plt.plot(merged["file name"], merged["BestFitness"], label="GA (Best Fitness)", marker="s")
 if "BestFitness_random" in merged.columns:
-    plt.plot(merged["Instance"], merged["BestFitness_random"], label="GA (Best Fitness_random)", marker="^")
-plt.xlabel("Instance")
+    plt.plot(merged["file name"], merged["BestFitness_random"], label="GA (Best Fitness_random)", marker="^")
+plt.xlabel("file name")
 plt.ylabel("Objective Value")
 plt.title("Comparaison : GA vs Modèle Exact (Gurobi)")
 plt.legend()
@@ -114,7 +118,7 @@ plt.show()
 
 # Graphique du pourcentage d'écart
 plt.figure(figsize=(10,5))
-plt.bar(merged["Instance"], merged["Gap(%)"], color='orange')
+plt.bar(merged["file name"], merged["Gap(%)"], color='orange')
 plt.xlabel("Instance")
 plt.ylabel("Ecart (%)")
 plt.title("Ecart entre GA et solution exacte (%)")

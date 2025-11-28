@@ -312,11 +312,14 @@ for idx, filename in enumerate(instance_files, start=1):
     print(f"⏱ Temps : {exec_time:.2f}s | Fitness = {final_fitness}")
     results.append({
             "Instance": instance_id,
+            "file name":filename,
             "BestFitness": final_fitness,
+            "truck cost" : cost,
+            "energy cost" : energy,
             "ExecutionTime(s)": round(exec_time, 3),
             "PopulationSize": len(population),
             "Generations": 20,
-            "best_chromosome": best_chrom    })
+            })
 
     # Sauvegarder le résumé global
 
