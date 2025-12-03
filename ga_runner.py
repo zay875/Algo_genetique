@@ -88,32 +88,7 @@ def mutate(chromosome, num_docks, mutation_rate=0.2):
                 idx1, idx2 = random.sample(range(len(containers)), 2)
                 containers[idx1], containers[idx2] = containers[idx2], containers[idx1]
                 chromosome[i] = containers
-        
-        '''
-        
-        if random.random() < mutation_rate and chromosome[i]:
-        # --- vraie mutation : déplacer 1 conteneur vers un autre camion ---
 
-            containers = chromosome[i]
-
-            # choisir un conteneur au hasard dans ce camion
-            container_to_move = random.choice(containers)
-
-            # retirer du camion actuel
-            containers.remove(container_to_move)
-
-            # choisir un autre camion comme destination
-            # (dire : les indices des camions sont : 0, 4, 8, 12, ... dans ton chromosome)
-            num_trucks = len(chromosome) // 4
-            current_truck_index = i // 4
-
-            # choisir un autre camion
-            new_truck_index = random.choice([t for t in range(num_trucks) if t != current_truck_index])
-
-            # ajouter au nouveau camion
-            new_position = new_truck_index * 4
-            chromosome[new_position].append(container_to_move)
-            '''
     return chromosome
 #diploid crossover inspired by the paper "A Diploid Evolutionary Algorithm for Sustainable Truck Scheduling at a Cross-Docking Facility by Maxim A. Dulebenets"
 '''
@@ -655,13 +630,15 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         #penalties.append(penalty_value)
     
     # 6. Résultat final
-    '''plt.plot(best_fitness_history)
+    '''
+    plt.plot(best_fitness_history)
     plt.xlabel("Generation")
     plt.ylabel("Best Fitness")
     plt.title("GA Convergence")
     plt.show(block=False)
     plt.pause(50)
-    plt.close()'''
+    plt.close()
+    '''
     '''
     plt.figure()
     plt.plot(penalties, label="Penalty")

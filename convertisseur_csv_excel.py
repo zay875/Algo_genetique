@@ -1,10 +1,10 @@
 import pandas as pd
 
 # Chemin du fichier CSV à convertir
-csv_file = "results_exact_summary_with_chargui_instances.csv"
+csv_file = "results_exact_summary_with_chargui_instances_with_param.csv"
 
 # Nom du fichier Excel de sortie
-excel_file = "fichiers excel/results_exact_summary_with_chargui_instances.xlsx"
+excel_file = "fichiers excel/results_exact_summary_with_chargui_instances_with_param.xlsx"
 
 # Lecture du fichier CSV
 df = pd.read_csv(csv_file) 
