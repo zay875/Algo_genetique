@@ -296,10 +296,11 @@ def correct_chrom(errors, chrom, trucks_df, containers_df, instance_id):
                 "containers": cont_pairs
             })
 
+            '''
             print("Truck:", t_id)
             print("Destinations:", dests)
             print("Containers:", cont_pairs)
-
+            '''
 
 
         if "sans camion correspondant" in e:
@@ -502,18 +503,18 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
 
         # 2. Garder élites
         elites = elitism_selection(population, fitness_values, num_elites)
-        print(f"elits before correct chrom: {elites}")
+        #print(f"elits before correct chrom: {elites}")
         #correct the elits
         corrected_elites = []
         for elite in elites:
-            print("\n--- ELITE AVANT CORRECTION ---")
-            print(elite)
+            #print("\n--- ELITE AVANT CORRECTION ---")
+            #print(elite)
             feasible, errors = verify_solution_feasibility(elite, trucks_df, containers_df, instance_id)
-            print(f"Feasible? {feasible}, errors: {errors}")
+            #print(f"Feasible? {feasible}, errors: {errors}")
         if not feasible:
             corrected = correct_chrom(errors, elite, trucks_df, containers_df, instance_id)
-            print("--- ELITE APRÈS CORRECTION ---")
-            print(corrected)
+            #print("--- ELITE APRÈS CORRECTION ---")
+            #print(corrected)
             elite = corrected
         corrected_elites.append(elite)
         '''
@@ -528,7 +529,7 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
         print(f"the elits are : {elites}")
         '''
         # 3. Générer enfants
-        max_attempts = 5  # pour éviter une boucle infinie
+        max_attempts = 2  # pour éviter une boucle infinie
         offspring = []
         while len(offspring) < len(population) - num_elites:
             parent1 = tournament_selection(population, fitness_values)
@@ -557,20 +558,20 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
 
                  # Vérification de faisabilité
                 feasible1, errors1 = verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
-                print(f"errors after ga operations for child 1{errors1}")
+                #print(f"errors after ga operations for child 1{errors1}")
                 feasible2, errors2 = verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
-                print(f"errors after ga operations for child 2{errors2}")
+                #print(f"errors after ga operations for child 2{errors2}")
                 if feasible1:
                     valid_children.append(child1)
                 else:
                     #corriger le chromosome
                     child1 = correct_chrom(errors1, child1, trucks_df, containers_df, instance_id)
                     feasible_after, error_after=verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
-                    print(f"the error after correcting the children after GA {error_after} and the child is {child1}")
+                    #print(f"the error after correcting the children after GA {error_after} and the child is {child1}")
                     if not feasible_after:
                         child1=correct_chrom(error_after, child1, trucks_df, containers_df, instance_id)
                         feasible_after4, error_after4=verify_solution_feasibility(child1, trucks_df, containers_df, instance_id)
-                        print(f"the error after correcting the children after GA {error_after4}and the child is {child1}")
+                        #print(f"the error after correcting the children after GA {error_after4}and the child is {child1}")
                         valid_children.append(child1)
                     else:
                         valid_children.append(child1)
@@ -580,11 +581,11 @@ def run_ga(initial_population, fitness_evaluator, containers_df, trucks_df, inst
                 else:
                     child2 = correct_chrom(errors2, child2, trucks_df, containers_df, instance_id)
                     feasible_after2, error_after2=verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
-                    print(f"the error after correcting the children after GA after second corection {error_after2}and the child is {child2}")
+                    #print(f"the error after correcting the children after GA after second corection {error_after2}and the child is {child2}")
                     if not feasible_after2:
                         child2=correct_chrom(error_after2, child2, trucks_df, containers_df, instance_id)
                         feasible_after3, error_after3=verify_solution_feasibility(child2, trucks_df, containers_df, instance_id)
-                        print(f"the error after correcting the children after GA after second corection {error_after3}and the child is {child2}")
+                        #print(f"the error after correcting the children after GA after second corection {error_after3}and the child is {child2}")
                         valid_children.append(child2)
                     else:
                         valid_children.append(child2)
