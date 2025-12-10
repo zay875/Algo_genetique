@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("results_exact_summary_with_chargui_instances_time_limit_10.csv")
+df = pd.read_csv("results_exact_summary_with_chargui_instances_time_limit_30.csv")
 
 df["Hard"] = (
     (df["Status"] == "TimeLimit") | 
