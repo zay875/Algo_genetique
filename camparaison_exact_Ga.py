@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # Charger les fichiers
 ga = pd.read_csv("results_summary_GA_ALL_instances_chargui.csv")
-exact = pd.read_csv("results_exact_summary_with_chargui_instances.csv")
+exact = pd.read_csv("results_exact_summary_with_chargui_instances_time_limit_30.csv")
 #random = pd.read_csv("results_summary_ramdom_pop.csv")
 
 # Normaliser la colonne Instance en int (si présente)
@@ -78,7 +78,7 @@ print(merged[cols_to_show])
 print("\n📊 Moyenne de l'écart (%) :", merged["Gap(%)"].mean())
 
 # === Sauvegarder le récapitulatif ===
-output_file = "comparison_summary_GA_VS_Exact_chargui_intances.csv"
+output_file = "comparison_summary_GA_VS_Exact_chargui_intances_timelimit_30.csv"
 save_cols = ["file name"]
 if "BestFitness_GA" in merged.columns:
     save_cols.append("BestFitness_GA")
