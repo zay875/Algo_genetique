@@ -1,9 +1,0 @@
-Instance_id,Instance,ContainerID,Length,Position,Destination
-inst_8_2_5,8,1,10,11,1
-inst_8_2_5,8,2,2,13,0
-inst_8_2_5,8,3,3,23,1
-inst_8_2_5,8,4,3,36,1
-inst_8_2_5,8,5,2,43,0
-inst_8_2_5,8,6,1,50,1
-inst_8_2_5,8,7,5,55,0
-inst_8_2_5,8,8,5,72,0

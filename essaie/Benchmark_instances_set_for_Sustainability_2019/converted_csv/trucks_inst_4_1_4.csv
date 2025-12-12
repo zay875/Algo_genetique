@@ -1,5 +1,0 @@
-Instance_id,Instance,TruckID,Destination,Cost,Capacity,DockPosition,added
-inst_4_1_4,4,1,1,351,13,3,False
-inst_4_1_4,4,2,1,351,13,8,False
-inst_4_1_4,4,3,1,351,13,13,False
-inst_4_1_4,4,4,1,351,13,18,False
