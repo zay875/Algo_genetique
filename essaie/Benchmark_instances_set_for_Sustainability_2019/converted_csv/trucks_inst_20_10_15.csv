@@ -1,0 +1,16 @@
+Instance_id,Instance,TruckID,Destination,Cost,Capacity,DockPosition,added
+inst_20_10_15,15,1,10,581,13,3,False
+inst_20_10_15,15,2,10,581,13,8,False
+inst_20_10_15,15,3,10,581,13,13,False
+inst_20_10_15,15,4,10,581,13,18,False
+inst_20_10_15,15,5,10,581,13,23,False
+inst_20_10_15,15,6,10,581,13,28,False
+inst_20_10_15,15,7,10,581,13,33,False
+inst_20_10_15,15,8,10,581,13,38,False
+inst_20_10_15,15,9,10,581,13,43,False
+inst_20_10_15,15,10,10,581,13,48,False
+inst_20_10_15,15,11,10,581,13,53,False
+inst_20_10_15,15,12,10,581,13,58,False
+inst_20_10_15,15,13,10,581,13,63,False
+inst_20_10_15,15,14,10,581,13,68,False
+inst_20_10_15,15,15,10,581,13,73,False

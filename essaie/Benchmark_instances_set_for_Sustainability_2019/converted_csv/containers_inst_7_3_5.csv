@@ -1,0 +1,8 @@
+Instance_id,Instance,ContainerID,Length,Position,Destination
+inst_7_3_5,7,1,4,5,0
+inst_7_3_5,7,2,3,21,0
+inst_7_3_5,7,3,5,29,0
+inst_7_3_5,7,4,1,41,1
+inst_7_3_5,7,5,10,56,0
+inst_7_3_5,7,6,2,63,0
+inst_7_3_5,7,7,3,72,1

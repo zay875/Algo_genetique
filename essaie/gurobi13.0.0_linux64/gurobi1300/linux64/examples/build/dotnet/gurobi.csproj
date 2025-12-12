@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;net8.0</TargetFrameworks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="gurobi130.netstandard20.dll">
+      <HintPath>../../../lib/gurobi130.netstandard20.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
