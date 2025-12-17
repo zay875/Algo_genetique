@@ -224,7 +224,7 @@ for idx, filename in enumerate(instance_files, start=1):
     except Exception as e:
         print(f" ERREUR lors de la conversion de {filename} : {e}")
     
-    num_generations= 5
+    num_generations= 100
     # Récupérer toutes les instances existantes
     #instances = sorted(containers_df["Instance"].unique())
     #print(containers_df["Instance"].dtype)
@@ -238,7 +238,7 @@ for idx, filename in enumerate(instance_files, start=1):
     #trucks_df = ensure_capacity(trucks_df, grouped_containers, instance_id)
     # Génération population initiale
     population = generate_initial_population(
-        pop_size=10,
+        pop_size=50,
         containers_df=containers_df,
         trucks_df=trucks_df,
         docks_df=docks_df,
@@ -273,7 +273,7 @@ for idx, filename in enumerate(instance_files, start=1):
         trucks_df,
         instance_id,
         num_docks,
-        num_generations=5
+        num_generations=100
     )  
     #print(f"the result of crossover and mutation, la longeure {len(new_population)}{new_population}")
 
@@ -318,12 +318,12 @@ for idx, filename in enumerate(instance_files, start=1):
             "energy cost" : energy,
             "ExecutionTime(s)": round(exec_time, 3),
             "PopulationSize": len(population),
-            "Generations": 20,
+            "Generations": 100,
             })
 
     # Sauvegarder le résumé global
 
 print("salut")
 results_df = pd.DataFrame(results)
-results_df.to_csv("results_summary_GA_ALL_instances_chargui.csv", index=False)
-print("\n✅ Tous les résultats enregistrés dans results_summary_GA_ALL_instances_chargui.csv")
+results_df.to_csv("results_summary_GA_ALL_instances_chargui_gen_100.csv", index=False)
+print("\n✅ Tous les résultats enregistrés dans results_summary_GA_ALL_instances_chargui_100_gen.csv")
